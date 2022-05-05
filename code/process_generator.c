@@ -11,7 +11,6 @@ struct processBuff
     short priority;
     long mtype;
 };// size without type = 4 * 3 + 2 = 14;
-const int sizeOfProcessBuff = sizeof(struct processBuff) - sizeof(long);
 
 int main(int argc, char * argv[])
 {
@@ -37,7 +36,7 @@ int main(int argc, char * argv[])
     // run clock process to start the timer
     system("gcc clk.c -o clk.out;./clk.out &");
     // run schedular to start working with ready processes
-    // system("gcc scheduler.c -o scheduler.out; ./scheduler.out &");
+    system("gcc scheduler.c -o scheduler.out; ./scheduler.out &");
 
     // 4. Use this function after creating the clock process to initialize clock
     initClk();// now we have access to the shared memory contains time
@@ -54,7 +53,7 @@ int main(int argc, char * argv[])
     } while (msgq_scheduler_id == -1);
     printf("queue with id = %d\n",msgq_scheduler_id);
     struct processBuff processTemp;    
-    processTemp.mtype = 8;
+    processTemp.mtype = 0;
     while (processTableLength > 0)
     {  
         if(head->arrivalTime <= getClk())
@@ -64,20 +63,18 @@ int main(int argc, char * argv[])
             processTemp.arrivalTime = head->arrivalTime;
             processTemp.priority = head->priority;
             processTemp.remainingTime = head->remainingTime;
-            printf("%d\n",msgsnd(msgq_scheduler_id,&processTemp,sizeOfProcessBuff,!IPC_NOWAIT));
+            msgsnd(msgq_scheduler_id,&processTemp,14,!IPC_NOWAIT);
             deleteFirst();
         }
     }
+    // testing and ok to be deleted
+    printf("done sending\n");
+    // to not destroy the clock till ctrl+c also for temporary cleaning
     while(1)
     {
         if(breaK)
             break;
     }
-    // comments for some tests
-    // sleep(3);
-    // struct msqid_ds mmm;
-    // msgctl(msgq_scheduler_id,IPC_STAT,&mmm);
-    // printf("\n%ld\n",mmm.msg_qnum);
     
     // 7. Clear clock resources
     destroyClk(true);
