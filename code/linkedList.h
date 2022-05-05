@@ -1,22 +1,23 @@
 #include "headers.h"
-typedef struct PCB
+struct PCB
 {
     int id;
     int arrivalTime;
     int remainingTime;
     short priority;
     bool state; // 0=>ready 1=>running
-    PCB *next;
-    PCB *prev;
-} PCB;
+    struct PCB *next;
+    struct PCB *prev;
+};
+
 int processTableLength = 0;
-PCB *head = NULL;
-PCB *tail = NULL;
-PCB *current = NULL;
+struct PCB *head = NULL;
+struct PCB *tail = NULL;
+struct PCB *current = NULL;
 
 void insertLast(int id,int arrivalTime,int remainingTime,short priority)
 {
-    PCB *newProcess = (PCB*) malloc(sizeof(PCB));
+    struct PCB *newProcess = (struct PCB*) malloc(sizeof(struct PCB));
     newProcess->id = id;
     newProcess->arrivalTime = arrivalTime;
     newProcess->priority = priority;
@@ -33,7 +34,7 @@ void insertLast(int id,int arrivalTime,int remainingTime,short priority)
     tail = newProcess;
 }
 
-PCB* find(int pid)
+struct PCB* find(int pid)
 {
     current = head;
     while(current != NULL)
@@ -44,13 +45,16 @@ PCB* find(int pid)
     }
     return NULL;
 }
-bool deleteFirst()
+void deleteFirst()
 {
     if(head == NULL)
-        return 0;
+        return;
     current = head;
     head = head->next;
-    // delete current;
+    if(head != NULL)
+        head->prev = NULL;
+    processTableLength--;
+    free(current);
 }
 
 void printLinkList()
