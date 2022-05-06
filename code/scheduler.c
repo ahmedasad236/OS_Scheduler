@@ -5,6 +5,9 @@
 #include "queue.h"
 #include "srtnQueue.h"
 #include <string.h>
+PCB* currentSrtnProcess;
+
+
 struct processBuff
 {
     int id;
@@ -54,7 +57,7 @@ void RoundRobin(queue *runningProcesses)
     while (1)
     {
         if (head && head->arrivalTime >= getClk())
-            startNewProcess(runningProcesses);
+            insertProcessRR(runningProcesses);
         if (getClk() >= clk + timeSlot)
         {
             moveToNextProcess(runningProcesses);
@@ -63,15 +66,25 @@ void RoundRobin(queue *runningProcesses)
     }
 }
 
-void insertProcessSRTN(PCB* process) {
-    
-}
-
-
 void shortestRemainingTimeNext(PCB* process, srtnQueue* srtnProcesses){
-    if(srtnProcesses.isEmpty) {
-        
+    
+    if(isSrtnEmpty(srtnProcesses)) {
+        currentSrtnProcess = process;
+        startNewProcess(process);
     }
+    
+    else {
+
+        if(process->remainingTime < currentSrtnProcess->remainingTime) {
+            kill(currentSrtnProcess->processID, SIGINT);
+            srtnQueueInsert(srtnProcesses, currentSrtnProcess);
+            currentSrtnProcess = process;
+            startNewProcess(process);
+        }
+        else
+            srtnQueueInsert(srtnProcesses, process);
+    }
+
 }
 
 int main(int argc, char *argv[])
@@ -79,7 +92,6 @@ int main(int argc, char *argv[])
     queue *runningProcesses = createQueue();
     srtnQueue* srtnProcesses = createSrtnQueue();
 
-    printf("hi\n");
     initClk();
     int msgq_processGenerator_id;
     do
@@ -88,17 +100,18 @@ int main(int argc, char *argv[])
     } while (msgq_processGenerator_id == -1);
 
     struct processBuff processTemp;
-    processTemp.mtype = 8;
+    
     printf("%d\n", msgq_processGenerator_id);
     int msgrcv_val;
     while (1)
     {
+
+        PCB* newProcess;
         // we check if the message queue contains anyvalue
         // while loop for handling more than one process at the same time
         while (msgrcv(msgq_processGenerator_id, &processTemp, 14, 0, IPC_NOWAIT) != -1)
         {
-            // printf("id=%d\n",processTemp.id);
-            PCB* newProcess = createNewProcess(processTemp.id, processTemp.arrivalTime,
+            newProcess = createNewProcess(processTemp.id, processTemp.arrivalTime,
                        processTemp.remainingTime, processTemp.priority);
 
             insertLast(newProcess);

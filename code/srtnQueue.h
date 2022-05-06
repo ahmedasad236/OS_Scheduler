@@ -1,12 +1,11 @@
-#include "linkedList.h"
 typedef struct PCB PCB;
 typedef struct srtnQueue
 {
-    int size = 0;
-    PCB *head = NULL;
-    PCB *tail = NULL;
-    PCB *top = NULL;
-} srtnQqueue;
+    int size;
+    PCB *head;
+    PCB *tail;
+    PCB *top;
+}srtnQueue;
 
 srtnQueue *createSrtnQueue()
 {
@@ -18,36 +17,36 @@ srtnQueue *createSrtnQueue()
     return newQueue;
 }
 
-void linkTwoPointers(PCB* &p1, PCB* &p2) {
+void linkTwoPointers(PCB* p1, PCB* p2) {
     p2->next = p1->next;
     p1->next->prev = p2;
     p1->next = p2;
     p2->prev = p1;
 }
 
-void srtnQueueInsert(PCB *newProcess)
+void srtnQueueInsert(srtnQueue* q, PCB *newProcess)
 {
     
     q->size++;
     
     if(!head){
-        top = head = newProcess;
-        newProcess->next = tail = NULL;
+        q->top = q->head = newProcess;
+        newProcess->next = q->tail = NULL;
         return;
     }
     
-    PCB* tempPtr = head;
-    while(tempPtr->next && remainingTime >= tempPtr.remainingTime) tempPtr = tempPtr->next;
+    PCB* tempPtr = q->head;
+    while(tempPtr->next && newProcess->remainingTime >= tempPtr->remainingTime) tempPtr = tempPtr->next;
     
     
-    if(tempPtr == tail){
-        if(remainingTime >= tail.remainingTime){
-            tail->next = newProcess;
-            newProcess->prev = tail;
-            tail = newProcess;
+    if(tempPtr == q->tail){
+        if(newProcess->remainingTime >= q->tail->remainingTime){
+            q->tail->next = newProcess;
+            newProcess->prev = q->tail;
+            q->tail = newProcess;
         }
         else
-            linkTwoPointers(tail->prev, newProcess);
+            linkTwoPointers(q->tail->prev, newProcess);
     }
 
     else 
@@ -64,6 +63,7 @@ void srtnQueueDeleteFirst(srtnQueue*q)
     }
     q->top = q->head;
     q->head = q->head->next;
+    q->top = q->head;
     free(q->top);
     q->size--;
 }
@@ -72,20 +72,7 @@ PCB* peek(){
     return head;
 }
 
-
-PCB *srtnQueueFind(srtnQueue *q, int pid)
-{
-    top = q->head;
-    while (top != NULL)
-    {
-        if (top->id == pid)
-            return top;
-        top = top->next;
-    }
-    return NULL;
-}
-
-bool isEmpty(srtnQueue*q)
+bool isSrtnEmpty(srtnQueue*q)
 {
     return q->size == 0;
 }

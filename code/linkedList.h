@@ -5,10 +5,12 @@ typedef struct PCB
     int id;
     int arrivalTime;
     int remainingTime;
+    int startTime;
+    int finishTime;
     short priority;
     bool state; // 0=>ready 1=>running
-    PCB *next;
-    PCB *prev;
+    struct PCB *next;
+    struct PCB *prev;
 }PCB;
 
 int processTableLength = 0;

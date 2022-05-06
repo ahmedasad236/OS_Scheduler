@@ -1,0 +1,10 @@
+scheduler.c: In function ‘itoa’:
+scheduler.c:32:5: warning: passing argument 1 of ‘snprintf’ makes pointer from integer without a cast [enabled by default]
+     snprintf(*str, length + 1, "%d", num);
+     ^
+In file included from headers.h:1:0,
+                 from linkedList.h:1,
+                 from scheduler.c:1:
+/usr/include/stdio.h:386:12: note: expected ‘char * __restrict__’ but argument is of type ‘char’
+ extern int snprintf (char *__restrict __s, size_t __maxlen,
+            ^
