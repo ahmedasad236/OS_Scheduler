@@ -1,23 +1,23 @@
 #include "headers.h"
-struct PCB
+typedef struct PCB
 {
     int id;
     int arrivalTime;
     int remainingTime;
     short priority;
     bool state; // 0=>ready 1=>running
-    struct PCB *next;
-    struct PCB *prev;
-};
+    PCB *next;
+    PCB *prev;
+}PCB;
 
 int processTableLength = 0;
-struct PCB *head = NULL;
-struct PCB *tail = NULL;
-struct PCB *current = NULL;
+PCB *head = NULL;
+PCB *tail = NULL;
+PCB *current = NULL;
 
-struct PCB *createNewProcess(int id, int arrivalTime, int remainingTime, short priority)
+ PCB *createNewProcess(int id, int arrivalTime, int remainingTime, short priority)
 {
-    struct PCB *newProcess = (struct PCB *)malloc(sizeof(struct PCB));
+     PCB *newProcess = ( PCB *)malloc(sizeof( PCB));
     newProcess->id = id;
     newProcess->arrivalTime = arrivalTime;
     newProcess->remainingTime = remainingTime;
@@ -28,9 +28,8 @@ struct PCB *createNewProcess(int id, int arrivalTime, int remainingTime, short p
     return newProcess;
 }
 
-void insertLast(int id, int arrivalTime, int remainingTime, short priority)
+void insertLast(PCB *newProcess)
 {
-    struct PCB *newProcess = createNewProcess(id, arrivalTime, remainingTime, priority);
     processTableLength++;
     newProcess->next = NULL;
     newProcess->prev = tail;
@@ -41,7 +40,7 @@ void insertLast(int id, int arrivalTime, int remainingTime, short priority)
     tail = newProcess;
 }
 
-struct PCB *find(int pid)
+PCB *find(int pid)
 {
     current = head;
     while (current != NULL)

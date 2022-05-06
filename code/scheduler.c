@@ -3,6 +3,7 @@
 #include <sys/msg.h>
 #include <sys/shm.h>
 #include "queue.h"
+#include "srtnQueue.h"
 #include <string.h>
 struct processBuff
 {
@@ -20,6 +21,7 @@ void moveToNextProcess(queue *runningProcesses)
     // send signal to next process to work
     runningProcesses->current = runningProcesses->current->next;
 }
+
 char *itoa(int num)
 {
     int length = snprintf(NULL, 0, "%d", num);
@@ -27,21 +29,24 @@ char *itoa(int num)
     snprintf(*str, length + 1, "%d", num);
     return str;
 }
-void startNewProcess(queue *runningProcesses)
+
+void startNewProcess(PCB* current)
 {
     // run the process and send remaining time to it
-    PCB *current = runningProcesses->current;
     int key = shmget(current->id, sizeof(int), 0666 | IPC_CREAT);
     char *processRunMessage = malloc(sizeof(char) * 100);
     snprintf(processRunMessage, 100, "gcc process.c -o process_%d && ./process_%d %d %d", current->id, current->id, current->remainingTime, current->id);
     system(processRunMessage);
 }
+
 void insertProcessRR(queue *runningProcesses)
 {
-    startNewProcess(runningProcesses);
+    PCB *current = runningProcesses->current;
+    startNewProcess(current);
     queueInsertPointer(runningProcesses, head);
     deleteFirst();
 }
+
 void RoundRobin(queue *runningProcesses)
 {
     int clk = getClk();
@@ -58,9 +63,21 @@ void RoundRobin(queue *runningProcesses)
     }
 }
 
+void insertProcessSRTN(PCB* process) {
+    
+}
+
+
+void shortestRemainingTimeNext(PCB* process, srtnQueue* srtnProcesses){
+    if(srtnProcesses.isEmpty) {
+        
+    }
+}
+
 int main(int argc, char *argv[])
 {
     queue *runningProcesses = createQueue();
+    srtnQueue* srtnProcesses = createSrtnQueue();
 
     printf("hi\n");
     initClk();
@@ -81,8 +98,10 @@ int main(int argc, char *argv[])
         while (msgrcv(msgq_processGenerator_id, &processTemp, 14, 0, IPC_NOWAIT) != -1)
         {
             // printf("id=%d\n",processTemp.id);
-            insertLast(processTemp.id, processTemp.arrivalTime,
+            PCB* newProcess = createNewProcess(processTemp.id, processTemp.arrivalTime,
                        processTemp.remainingTime, processTemp.priority);
+
+            insertLast(newProcess);
         }
         // code for scheduling the processes
     }

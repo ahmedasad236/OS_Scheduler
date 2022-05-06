@@ -7,6 +7,7 @@ typedef struct queue
     PCB *tail;
     PCB *current;
 } queue;
+
 queue *createQueue()
 {
     queue *newQueue = (queue *)malloc(sizeof(queue));
@@ -16,9 +17,9 @@ queue *createQueue()
     newQueue->current = NULL;
     return newQueue;
 }
-void queueInsert(queue *q, int id, int arrivalTime, int remainingTime, int priority)
+
+void queueInsert(PCB *newProcess)
 {
-    PCB *newProcess = createNewProcess(id, arrivalTime, remainingTime, priority);
     q->size++;
     newProcess->next = q->head;
     newProcess->prev = q->tail;
@@ -28,10 +29,12 @@ void queueInsert(queue *q, int id, int arrivalTime, int remainingTime, int prior
         q->tail->next = newProcess;
     q->tail = newProcess;
 }
+
 void queueInsertPointer(queue *q, PCB *pcb)
 {
-    queueInsert(q, pcb->id, pcb->arrivalTime, pcb->remainingTime, pcb->priority);
+    queueInsert(q, pcb);
 }
+
 void queueDeleteFirst(queue *q)
 {
     if (q->head == NULL)
@@ -44,6 +47,7 @@ void queueDeleteFirst(queue *q)
     free(q->current);
     q->size--;
 }
+
 PCB *queueFind(queue *q, int pid)
 {
     current = q->head;
@@ -55,6 +59,7 @@ PCB *queueFind(queue *q, int pid)
     }
     return NULL;
 }
+
 void deleteProcess(queue *q, int pid)
 {
     PCB *process = queueFind(q, pid);
@@ -75,6 +80,7 @@ void deleteProcess(queue *q, int pid)
         free(process);
     }
 }
+
 bool isEmpty(queue *q)
 {
     return q->size == 0;
