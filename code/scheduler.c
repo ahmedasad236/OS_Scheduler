@@ -11,8 +11,7 @@ struct processBuff
     int remainingTime;
     short priority;
     long mtype;
-}; // size without type = 4 * 3 + 2 = 14;
-
+};
 void moveToNextProcess(queue *runningProcesses)
 {
     if (runningProcesses->current == NULL || runningProcesses->current->next == NULL)
@@ -33,7 +32,6 @@ void startNewProcess(queue *runningProcesses)
     // run the process and send remaining time to it
     PCB *current = runningProcesses->current;
     int key = shmget(current->id, sizeof(int), 0666 | IPC_CREAT);
-    current->shm_ptr = shmat(key, NULL, 0);
     char *processRunMessage = malloc(sizeof(char) * 100);
     snprintf(processRunMessage, 100, "gcc process.c -o process_%d && ./process_%d %d %d", current->id, current->id, current->remainingTime, current->id);
     system(processRunMessage);

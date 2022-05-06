@@ -6,7 +6,6 @@ struct PCB
     int remainingTime;
     short priority;
     bool state; // 0=>ready 1=>running
-    int *shm_ptr;
     struct PCB *next;
     struct PCB *prev;
 };

@@ -2,21 +2,20 @@
 
 /* Modify this file as needed*/
 int remaining_time;
-bool terminated = true;
+bool stopped = true;
 int *shm_ptr;
 void SIGINT_handler(int sig)
 {
-    if (terminated)
+    if (stopped)
         perror("SIGINT_handler");
-    terminated = true;
+    stopped = true;
     signal(SIGINT, SIGINT_handler);
 }
 void SIGCONT_handler(int sig)
 {
-    if (!terminated)
+    if (!stopped)
         perror("SIGCONT_handler");
-    remaining_time = *shm_ptr;
-    terminated = false;
+    stopped = false;
     signal(SIGCONT, SIGCONT_handler);
 }
 
@@ -33,7 +32,7 @@ int main(int argc, char *argv[])
     int clk = getClk();
     while (remaining_time > 0)
     {
-        if (terminated)
+        if (stopped)
             continue;
         printf("process_id : %d,remaining_time : %d\n", getpid(), remaining_time);
     }
