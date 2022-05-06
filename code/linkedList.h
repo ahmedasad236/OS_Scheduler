@@ -15,31 +15,38 @@ struct PCB *head = NULL;
 struct PCB *tail = NULL;
 struct PCB *current = NULL;
 
-void insertLast(int id,int arrivalTime,int remainingTime,short priority)
+struct PCB *createNewProcess(int id, int arrivalTime, int remainingTime, short priority)
 {
-    struct PCB *newProcess = (struct PCB*) malloc(sizeof(struct PCB));
+    struct PCB *newProcess = (struct PCB *)malloc(sizeof(struct PCB));
     newProcess->id = id;
     newProcess->arrivalTime = arrivalTime;
-    newProcess->priority = priority;
     newProcess->remainingTime = remainingTime;
+    newProcess->priority = priority;
     newProcess->state = 0;
-    processTableLength++;
+    newProcess->next = NULL;
+    newProcess->prev = NULL;
+    return newProcess;
+}
 
+void insertLast(int id, int arrivalTime, int remainingTime, short priority)
+{
+    struct PCB *newProcess = createNewProcess(id, arrivalTime, remainingTime, priority);
+    processTableLength++;
     newProcess->next = NULL;
     newProcess->prev = tail;
-    if(tail == NULL)
+    if (tail == NULL)
         head = newProcess;
     else
         tail->next = newProcess;
     tail = newProcess;
 }
 
-struct PCB* find(int pid)
+struct PCB *find(int pid)
 {
     current = head;
-    while(current != NULL)
+    while (current != NULL)
     {
-        if(current->id == pid)
+        if (current->id == pid)
             return current;
         current = current->next;
     }
@@ -47,11 +54,11 @@ struct PCB* find(int pid)
 }
 void deleteFirst()
 {
-    if(head == NULL)
+    if (head == NULL)
         return;
     current = head;
     head = head->next;
-    if(head != NULL)
+    if (head != NULL)
         head->prev = NULL;
     processTableLength--;
     free(current);
@@ -60,9 +67,9 @@ void deleteFirst()
 void printLinkList()
 {
     current = head;
-    while(current != NULL)
+    while (current != NULL)
     {
-        printf("%d\n",current->id);
+        printf("%d\n", current->id);
         current = current->next;
     };
 }
