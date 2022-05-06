@@ -57,7 +57,7 @@ void RoundRobin(queue *runningProcesses)
     while (1)
     {
         if (head && head->arrivalTime >= getClk())
-            startNewProcess(runningProcesses);
+            insertProcessRR(runningProcesses);
         if (getClk() >= clk + timeSlot)
         {
             moveToNextProcess(runningProcesses);
@@ -66,23 +66,23 @@ void RoundRobin(queue *runningProcesses)
     }
 }
 
-void shortestRemainingTimeNext(PCB* &process, srtnQueue* &srtnProcesses){
+void shortestRemainingTimeNext(PCB* process, srtnQueue* srtnProcesses){
     
-    if(srtnProcesses.isEmpty) {
+    if(isSrtnEmpty(srtnProcesses)) {
         currentSrtnProcess = process;
         startNewProcess(process);
     }
     
     else {
 
-        if(process->remainingTime < currentSrtnProcess) {
+        if(process->remainingTime < currentSrtnProcess->remainingTime) {
             kill(currentSrtnProcess->processID, SIGINT);
-            srtnQueueInsert(currentSrtnProcess);
+            srtnQueueInsert(srtnProcesses, currentSrtnProcess);
             currentSrtnProcess = process;
             startNewProcess(process);
         }
         else
-            srtnQueueInsert(process);
+            srtnQueueInsert(srtnProcesses, process);
     }
 
 }

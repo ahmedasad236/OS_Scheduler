@@ -1,4 +1,3 @@
-#include "linkedList.h"
 typedef struct PCB PCB;
 typedef struct queue
 {
@@ -18,7 +17,7 @@ queue *createQueue()
     return newQueue;
 }
 
-void queueInsert(PCB *newProcess)
+void queueInsert(queue* q, PCB *newProcess)
 {
     q->size++;
     newProcess->next = q->head;
