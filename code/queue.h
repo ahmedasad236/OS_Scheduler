@@ -17,21 +17,36 @@ queue *createQueue()
     return newQueue;
 }
 
-void queueInsert(queue* q, PCB *newProcess)
+void queueInsert(queue *q, PCB *newProcess)
 {
+
     q->size++;
+    if (q->head == NULL)
+    {
+        q->head = q->tail = newProcess;
+        newProcess->next = newProcess->prev = newProcess;
+        return;
+    }
+    q->head->prev = newProcess;
+    q->tail->next = newProcess;
     newProcess->next = q->head;
     newProcess->prev = q->tail;
-    if (q->tail == NULL)
-        q->head = newProcess;
-    else
-        q->tail->next = newProcess;
     q->tail = newProcess;
 }
-
-void queueInsertPointer(queue *q, PCB *pcb)
+void insertNewProcess(queue *q, PCB *newProcess)
 {
-    queueInsert(q, pcb);
+    queueInsert(q, newProcess);
+    // if (q->current == NULL)
+    // {
+    //     queueInsert(q, newProcess);
+    //     return;
+    // }
+    // q->size++;
+    // newProcess->next = q->current;
+    // newProcess->prev = q->current->prev;
+    // q->current->prev->next = newProcess;
+    // q->current->prev = newProcess;
+    // printf(":: %p %p %p", newProcess, newProcess->prev, newProcess->next);
 }
 
 void queueDeleteFirst(queue *q)
@@ -49,7 +64,7 @@ void queueDeleteFirst(queue *q)
 
 PCB *queueFind(queue *q, int pid)
 {
-    current = q->head;
+    PCB *current = q->head;
     while (current != NULL)
     {
         if (current->id == pid)
@@ -59,6 +74,29 @@ PCB *queueFind(queue *q, int pid)
     return NULL;
 }
 
+void deleteCurrentProcess(queue *q)
+{
+    if (q->current == NULL)
+    {
+        perror("No process in the queue");
+        return;
+    }
+    q->size--;
+    if (q->current->next == NULL)
+    {
+        free(q->head);
+        q->head = q->tail = NULL;
+        return;
+    }
+
+    q->current->prev->next = q->current->next;
+    q->current->next->prev = q->current->prev;
+    PCB *temp = q->current;
+    q->current = q->current->next;
+    free(temp);
+    if (q->current->next == q->current)
+        q->current->next = q->current->prev = NULL;
+}
 void deleteProcess(queue *q, int pid)
 {
     PCB *process = queueFind(q, pid);
@@ -83,4 +121,21 @@ void deleteProcess(queue *q, int pid)
 bool isEmpty(queue *q)
 {
     return q->size == 0;
+}
+void printQueue(queue *q)
+{
+    int s = q->size;
+    if (!q->current)
+        q->current = q->head;
+    for (int i = 0; i < s; i++)
+    {
+        printf("%d ", q->current->id);
+        if (q->current == NULL)
+        {
+            printf("NULL wrong\n");
+            break;
+        }
+        q->current = q->current->next;
+    }
+    q->size = s;
 }

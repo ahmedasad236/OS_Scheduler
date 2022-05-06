@@ -1,13 +1,21 @@
-#include "linkedList.h"
+#include "global_variables.h"
+#include "PCB.h"
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <sys/shm.h>
 #include "queue.h"
-#include "srtnQueue.h"
+// #include "srtnQueue.h"
 #include <string.h>
-PCB* currentSrtnProcess;
+PCB *currentSrtnProcess;
+int *shm_ptr;
+// srtnQueue *srtnProcesses;
+bool currentDeleted = false;
+typedef struct ALGORITHM_TYPE
+{
+    long mtype;
+    int algoType;
 
-
+} ALGORITHM_TYPE;
 struct processBuff
 {
     int id;
@@ -16,82 +24,113 @@ struct processBuff
     short priority;
     long mtype;
 };
-void moveToNextProcess(queue *runningProcesses)
+
+void startNewProcess(PCB *newProcess)
 {
-    if (runningProcesses->current == NULL || runningProcesses->current->next == NULL)
+    // run the process and send remaining time to it
+    char *processRunMessage = malloc(sizeof(char) * 100);
+    *shm_ptr = -1;
+    snprintf(processRunMessage, 100, "gcc process.c -o process_%d && ./process_%d %d %d &", newProcess->id, newProcess->id, newProcess->remainingTime, getpid());
+    system(processRunMessage);
+    while (*shm_ptr == -1)
+        ;
+    printf("ID : %d\n", *shm_ptr);
+    newProcess->processID = *shm_ptr;
+}
+void SIGUSR1_handler(int sig)
+{
+    currentDeleted = true;
+    signal(SIGUSR1, SIGUSR1_handler);
+}
+
+void runNextRoundRobinProcess(queue *runningProcesses)
+{
+    PCB *current = runningProcesses->current;
+    if (current->processID == -1)
+        startNewProcess(current);
+    else
+        kill(current->processID, SIGCONT);
+}
+void checkForNewRoundRobinProcess(int msgqID, queue *runningProcesses)
+{
+    struct processBuff buff;
+    printf("1\n");
+    while (msgrcv(msgqID, &buff, 14, 0, IPC_NOWAIT) != -1)
+    {
+        PCB *newProcess;
+        newProcess = createNewProcess(buff.id, buff.arrivalTime,
+                                      buff.remainingTime, buff.priority);
+        insertNewProcess(runningProcesses, newProcess);
+        if (!runningProcesses->current)
+            runningProcesses->current = runningProcesses->head;
+    }
+    // printQueue(runningProcesses);
+}
+void moveToNextRoundRobinProcess(queue *runningProcesses)
+{
+    PCB *current = runningProcesses->current;
+    printf("2\n");
+    if (current == NULL || current->next == NULL)
+    {
+        printf("%p ", current);
+        printf("no you aren't");
         return;
+    }
+    printf("finally you reached");
+    sleep(1);
+    kill(current->processID, SIGSTOP);
+    current = current->next;
     // send signal to the current process to stop it
-    // send signal to next process to work
-    runningProcesses->current = runningProcesses->current->next;
+    runNextRoundRobinProcess(runningProcesses);
 }
 
 char *itoa(int num)
 {
     int length = snprintf(NULL, 0, "%d", num);
     char *str = malloc(length + 1);
-    snprintf(*str, length + 1, "%d", num);
+    snprintf(str, length + 1, "%d", num);
     return str;
 }
 
-void startNewProcess(PCB* current)
+void deleteRoundRobinProcessAndMoveToNextOne(queue *runningProcesses)
 {
-    // run the process and send remaining time to it
-    int key = shmget(current->id, sizeof(int), 0666 | IPC_CREAT);
-    char *processRunMessage = malloc(sizeof(char) * 100);
-    snprintf(processRunMessage, 100, "gcc process.c -o process_%d && ./process_%d %d %d", current->id, current->id, current->remainingTime, current->id);
-    system(processRunMessage);
+    deleteCurrentProcess(runningProcesses);
+    runNextRoundRobinProcess(runningProcesses);
+    currentDeleted = false;
 }
 
-void insertProcessRR(queue *runningProcesses)
-{
-    PCB *current = runningProcesses->current;
-    startNewProcess(current);
-    queueInsertPointer(runningProcesses, head);
-    deleteFirst();
-}
-
-void RoundRobin(queue *runningProcesses)
+void RoundRobin(queue *runningProcesses, int msgqID)
 {
     int clk = getClk();
-    const int timeSlot = 1;
     while (1)
     {
-        if (head && head->arrivalTime >= getClk())
-            insertProcessRR(runningProcesses);
-        if (getClk() >= clk + timeSlot)
+        checkForNewRoundRobinProcess(msgqID, runningProcesses);
+        // printf("clk : %d , clk : %d\n", clk, getClk());
+        if (currentDeleted)
         {
-            moveToNextProcess(runningProcesses);
+            printf("iam here and this is wrong");
+            deleteRoundRobinProcessAndMoveToNextOne(runningProcesses);
+            clk = getClk();
+        }
+        else if (getClk() >= clk + time_slot)
+        {
+            moveToNextRoundRobinProcess(runningProcesses);
             clk = getClk();
         }
     }
 }
 
-void shortestRemainingTimeNext(PCB* process, srtnQueue* srtnProcesses){
-    
-    if(isSrtnEmpty(srtnProcesses)) {
-        currentSrtnProcess = process;
-        startNewProcess(process);
-    }
-    
-    else {
-
-        if(process->remainingTime < currentSrtnProcess->remainingTime) {
-            kill(currentSrtnProcess->processID, SIGINT);
-            srtnQueueInsert(srtnProcesses, currentSrtnProcess);
-            currentSrtnProcess = process;
-            startNewProcess(process);
-        }
-        else
-            srtnQueueInsert(srtnProcesses, process);
-    }
-
+void getShmKey()
+{
+    int key = shmget(shm_key, sizeof(int), 0666 | IPC_CREAT);
+    shm_ptr = shmat(key, NULL, 0);
 }
-
 int main(int argc, char *argv[])
 {
     queue *runningProcesses = createQueue();
-    srtnQueue* srtnProcesses = createSrtnQueue();
-
+    // srtnProcesses = createSrtnQueue();
+    signal(SIGUSR1, SIGUSR1_handler);
+    getShmKey();
     initClk();
     int msgq_processGenerator_id;
     do
@@ -100,24 +139,49 @@ int main(int argc, char *argv[])
     } while (msgq_processGenerator_id == -1);
 
     struct processBuff processTemp;
-    
+
+    ALGORITHM_TYPE algorithm;
+    algorithm.mtype = 120;
+    msgrcv(msgq_processGenerator_id, &algorithm, 4, 120, !IPC_NOWAIT);
+    printf("%d\n", algorithm.algoType);
     printf("%d\n", msgq_processGenerator_id);
     int msgrcv_val;
-    while (1)
+    switch (algorithm.algoType)
     {
-
-        PCB* newProcess;
-        // we check if the message queue contains anyvalue
-        // while loop for handling more than one process at the same time
-        while (msgrcv(msgq_processGenerator_id, &processTemp, 14, 0, IPC_NOWAIT) != -1)
-        {
-            newProcess = createNewProcess(processTemp.id, processTemp.arrivalTime,
-                       processTemp.remainingTime, processTemp.priority);
-
-            insertLast(newProcess);
-        }
-        // code for scheduling the processes
+    case HPF:
+        break;
+    case SRTN:
+        break;
+    case RR:
+        RoundRobin(runningProcesses, msgq_processGenerator_id);
+        break;
+    default:
+        // perror("some thing wrong in chosen algorithms");
+        break;
     }
     // upon termination release the clock resources.
     destroyClk(true);
 }
+// void shortestRemainingTimeNext(PCB *process)
+// {
+
+//     if (isSrtnEmpty(srtnProcesses))
+//     {
+//         currentSrtnProcess = process;
+//         startNewProcess(process);
+//     }
+
+//     else
+//     {
+
+//         if (process->remainingTime < currentSrtnProcess->remainingTime)
+//         {
+//             kill(currentSrtnProcess->processID, SIGINT);
+//             srtnQueueInsert(srtnProcesses, currentSrtnProcess);
+//             currentSrtnProcess = process;
+//             startNewProcess(process);
+//         }
+//         else
+//             srtnQueueInsert(srtnProcesses, process);
+//     }
+// }

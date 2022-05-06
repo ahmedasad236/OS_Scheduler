@@ -29,7 +29,7 @@ void srtnQueueInsert(srtnQueue* q, PCB *newProcess)
     
     q->size++;
     
-    if(!head){
+    if(!q->head){
         q->top = q->head = newProcess;
         newProcess->next = q->tail = NULL;
         return;

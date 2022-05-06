@@ -2,6 +2,7 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 bool breaK = false;
+typedef struct PCB PCB;
 void clearResources(int);
 struct processBuff
 {
@@ -12,6 +13,11 @@ struct processBuff
     long mtype;
 }; // size without type = 4 * 3 + 2 = 14;
 
+typedef struct ALGORITHM_TYPE
+{
+    long mtype;
+    int algoType;
+} ALGORITHM_TYPE;
 int main(int argc, char *argv[])
 {
     signal(SIGINT, clearResources);
@@ -24,15 +30,18 @@ int main(int argc, char *argv[])
     fgets(buffer, 100, ptr);
 
     while (fscanf(ptr, "%d %d %d %d", &id, &arrivalTime, &remainingTime, &priority) == 4)
-        insertLast(id, arrivalTime, remainingTime, priority);
-
+    {
+        PCB *newProcess = createNewProcess(id, arrivalTime, remainingTime, priority);
+        insertLast(newProcess);
+    }
+    // printf("size : %d" , );
     // 2. Ask the user for the chosen scheduling algorithm and its parameters, if there are any.
-    short schedulerAlgorithm;
+    ALGORITHM_TYPE schedulerAlgorithm;
     do
     {
         printf("Choose of the following scedular algorithms\n1)HPF\t2)SRTN\t3)RR\n");
-        scanf("%hd", &schedulerAlgorithm);
-    } while (schedulerAlgorithm < 1 || schedulerAlgorithm > 3);
+        scanf("%d", &schedulerAlgorithm.algoType);
+    } while (schedulerAlgorithm.algoType < 1 || schedulerAlgorithm.algoType > 3);
     // 3. Initiate and create the scheduler and clock processes.
     // run clock process to start the timer
     system("gcc clk.c -o clk.out && ./clk.out &");
@@ -48,12 +57,15 @@ int main(int argc, char *argv[])
 
     // 6. Send the information to the scheduler at the appropriate time.
     // create the queue to communicate with the scheduler
+    schedulerAlgorithm.mtype = 120;
     int msgq_scheduler_id;
     do
     {
         msgq_scheduler_id = msgget(88, 0666 | IPC_CREAT);
     } while (msgq_scheduler_id == -1);
     printf("queue with id = %d\n", msgq_scheduler_id);
+    printf("%d - %ld\n", schedulerAlgorithm.algoType , schedulerAlgorithm.mtype);
+    msgsnd(msgq_scheduler_id, &schedulerAlgorithm, 4, !IPC_NOWAIT);
     struct processBuff processTemp;
     processTemp.mtype = 0;
     while (processTableLength > 0)
@@ -69,7 +81,7 @@ int main(int argc, char *argv[])
         }
     }
     // testing and ok to be deleted
-    printf("done sending\n");
+    printf("done sending : %d\n" , getClk());
     // to not destroy the clock till ctrl+c also for temporary cleaning
     while (1)
     {
