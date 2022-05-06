@@ -1,6 +1,7 @@
 #include "headers.h"
 typedef struct PCB
 {
+    int processID;
     int id;
     int arrivalTime;
     int remainingTime;
