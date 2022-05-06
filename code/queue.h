@@ -2,10 +2,10 @@
 typedef struct PCB PCB;
 typedef struct queue
 {
-    int size = 0;
-    PCB *head = NULL;
-    PCB *tail = NULL;
-    PCB *current = NULL;
+    int size;
+    PCB *head;
+    PCB *tail;
+    PCB *current;
 } queue;
 queue *createQueue()
 {
@@ -27,6 +27,10 @@ void queueInsert(queue *q, int id, int arrivalTime, int remainingTime, int prior
     else
         q->tail->next = newProcess;
     q->tail = newProcess;
+}
+void queueInsertPointer(queue *q, PCB *pcb)
+{
+    queueInsert(q, pcb->id, pcb->arrivalTime, pcb->remainingTime, pcb->priority);
 }
 void queueDeleteFirst(queue *q)
 {
