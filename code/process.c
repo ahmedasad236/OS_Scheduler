@@ -2,8 +2,23 @@
 #include "global_variables.h"
 /* Modify this file as needed*/
 int remaining_time;
-bool stopped = true;
 int *shm_ptr;
+
+// void SIGUSR1_handler(int sig)
+// {
+//     signal(SIGUSR1, SIGUSR1_handler);
+//     raise(SIGSTOP);
+// }
+// void SIGUSR2_handler(int sig)
+// {
+//     raise(SIGCONT);
+//     signal(SIGUSR2, SIGUSR2_handler);
+// }
+// void SIGCONT_handler(int sig)
+// {
+//     printf("hello world\n");
+//     signal(SIGCONT, SIGCONT_handler);
+// }
 int main(int argc, char *argv[])
 {
     initClk();
@@ -16,13 +31,14 @@ int main(int argc, char *argv[])
     shm_ptr = (int *)shmat(shm_id, NULL, 0);
     *shm_ptr = getpid();
     int clk = getClk();
+    // signal(SIGUSR1, SIGUSR1_handler);
+    // signal(SIGUSR2, SIGUSR2_handler);
+    // signal(SIGCONT, SIGCONT_handler);
     while (remaining_time > 0)
     {
-        if (stopped)
-            continue;
-        printf("process_id : %d,remaining_time : %d\n", getpid(), remaining_time);
+        // printf("process_id : %d,remaining_time : %d\n", getpid(), remaining_time);
     }
     kill(scheduler_id, SIGUSR1);
-    destroyClk(false);
+    // destroyClk(false);
     return 0;
 }

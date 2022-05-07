@@ -19,7 +19,6 @@ queue *createQueue()
 
 void queueInsert(queue *q, PCB *newProcess)
 {
-
     q->size++;
     if (q->head == NULL)
     {
@@ -36,6 +35,7 @@ void queueInsert(queue *q, PCB *newProcess)
 void insertNewProcess(queue *q, PCB *newProcess)
 {
     queueInsert(q, newProcess);
+    printf("i reached after inserting\n");
     // if (q->current == NULL)
     // {
     //     queueInsert(q, newProcess);

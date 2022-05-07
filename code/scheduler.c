@@ -31,6 +31,7 @@ void startNewProcess(PCB *newProcess)
     char *processRunMessage = malloc(sizeof(char) * 100);
     *shm_ptr = -1;
     snprintf(processRunMessage, 100, "gcc process.c -o process_%d && ./process_%d %d %d &", newProcess->id, newProcess->id, newProcess->remainingTime, getpid());
+    printf("%s\n", processRunMessage);
     system(processRunMessage);
     while (*shm_ptr == -1)
         ;
@@ -47,17 +48,23 @@ void runNextRoundRobinProcess(queue *runningProcesses)
 {
     PCB *current = runningProcesses->current;
     if (current->processID == -1)
+    {
+        printf("No process to run\n");
         startNewProcess(current);
+    }
     else
+    {
+        // printf("ID : %d\n", current->processID);
         kill(current->processID, SIGCONT);
+    }
 }
 void checkForNewRoundRobinProcess(int msgqID, queue *runningProcesses)
 {
     struct processBuff buff;
-    printf("1\n");
     while (msgrcv(msgqID, &buff, 14, 0, IPC_NOWAIT) != -1)
     {
         PCB *newProcess;
+        printf("ID : %d\n", buff.id);
         newProcess = createNewProcess(buff.id, buff.arrivalTime,
                                       buff.remainingTime, buff.priority);
         insertNewProcess(runningProcesses, newProcess);
@@ -69,17 +76,17 @@ void checkForNewRoundRobinProcess(int msgqID, queue *runningProcesses)
 void moveToNextRoundRobinProcess(queue *runningProcesses)
 {
     PCB *current = runningProcesses->current;
-    printf("2\n");
     if (current == NULL || current->next == NULL)
     {
-        printf("%p ", current);
-        printf("no you aren't");
+        if (current != NULL)
+        {
+            printf("next is null");
+        }
         return;
     }
-    printf("finally you reached");
-    sleep(1);
-    kill(current->processID, SIGSTOP);
-    current = current->next;
+    printf("process id : %d\n", current->processID);
+    kill(current->processID, SIGINT);
+    runningProcesses->current = current->next;
     // send signal to the current process to stop it
     runNextRoundRobinProcess(runningProcesses);
 }
@@ -102,9 +109,13 @@ void deleteRoundRobinProcessAndMoveToNextOne(queue *runningProcesses)
 void RoundRobin(queue *runningProcesses, int msgqID)
 {
     int clk = getClk();
-    while (1)
+    // while (1)
+    for (int i = 0; i < 100; i++)
     {
+        // printf("I : %d, clk : %d\n",getClk() ,i);
+        // printf("1\n");
         checkForNewRoundRobinProcess(msgqID, runningProcesses);
+        // printf("2\n");
         // printf("clk : %d , clk : %d\n", clk, getClk());
         if (currentDeleted)
         {
@@ -112,9 +123,18 @@ void RoundRobin(queue *runningProcesses, int msgqID)
             deleteRoundRobinProcessAndMoveToNextOne(runningProcesses);
             clk = getClk();
         }
-        else if (getClk() >= clk + time_slot)
+        // else if (getClk() <= clk + 1)
+        else
         {
+            // printf("%d %d\n", clk, getClk());
+            // if (runningProcesses->current)
+            //     ;
+            // printf("%d\n", runningProcesses->size);
+
+            // printf("cur ID : %d\n", runningProcesses->current->id);
+            // printf("3\n");
             moveToNextRoundRobinProcess(runningProcesses);
+            // printf("4\n");
             clk = getClk();
         }
     }
@@ -128,6 +148,11 @@ void getShmKey()
 int main(int argc, char *argv[])
 {
     queue *runningProcesses = createQueue();
+    PCB *temp1 = createNewProcess(121, 0, 10, 1);
+    PCB *temp2 = createNewProcess(213, 0, 10, 1);
+
+    insertNewProcess(runningProcesses, temp1);
+    insertNewProcess(runningProcesses, temp2);
     // srtnProcesses = createSrtnQueue();
     signal(SIGUSR1, SIGUSR1_handler);
     getShmKey();
@@ -137,12 +162,12 @@ int main(int argc, char *argv[])
     {
         msgq_processGenerator_id = msgget(88, 0666 | IPC_CREAT);
     } while (msgq_processGenerator_id == -1);
-
     struct processBuff processTemp;
 
     ALGORITHM_TYPE algorithm;
     algorithm.mtype = 120;
     msgrcv(msgq_processGenerator_id, &algorithm, 4, 120, !IPC_NOWAIT);
+    printf("iam here\n");
     printf("%d\n", algorithm.algoType);
     printf("%d\n", msgq_processGenerator_id);
     int msgrcv_val;

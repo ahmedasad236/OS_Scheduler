@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
         msgq_scheduler_id = msgget(88, 0666 | IPC_CREAT);
     } while (msgq_scheduler_id == -1);
     printf("queue with id = %d\n", msgq_scheduler_id);
-    printf("%d - %ld\n", schedulerAlgorithm.algoType , schedulerAlgorithm.mtype);
+    printf("%d - %ld\n", schedulerAlgorithm.algoType, schedulerAlgorithm.mtype);
     msgsnd(msgq_scheduler_id, &schedulerAlgorithm, 4, !IPC_NOWAIT);
     struct processBuff processTemp;
     processTemp.mtype = 0;
@@ -72,6 +72,7 @@ int main(int argc, char *argv[])
     {
         if (head->arrivalTime <= getClk())
         {
+            printf("clk : %d\n", getClk());
             processTemp.id = head->id;
             processTemp.arrivalTime = head->arrivalTime;
             processTemp.priority = head->priority;
@@ -81,7 +82,7 @@ int main(int argc, char *argv[])
         }
     }
     // testing and ok to be deleted
-    printf("done sending : %d\n" , getClk());
+    printf("done sending : %d\n", getClk());
     // to not destroy the clock till ctrl+c also for temporary cleaning
     while (1)
     {
