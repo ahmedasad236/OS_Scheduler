@@ -3,13 +3,14 @@
 #include <sys/msg.h>
 #include <sys/shm.h>
 #include "../DS/queue.h"
-// #include "srtnQueue.h"
+#include "../DS/srtnQueue.h"
 #include <string.h>
 int cnt = 0;
-PCB *currentSrtnProcess;
-int *shm_ptr;
-// srtnQueue *srtnProcesses;
+PCB *currentSrtnProcess = NULL;
+int *shm_ptr = NULL;
 bool currentDeleted = false;
+
+
 typedef struct ALGORITHM_TYPE
 {
     long mtype;
@@ -42,6 +43,12 @@ void SIGUSR1_handler(int sig)
     signal(SIGUSR1, SIGUSR1_handler);
 }
 
+void continueProcess(PCB* current) {
+    printf("process %d is running\n", current->id);
+    kill(current->processID, SIGCONT);
+    kill(current->processID, SIGUSR2);
+}
+
 void runNextRoundRobinProcess(queue *runningProcesses)
 {
     PCB *current = runningProcesses->current;
@@ -55,12 +62,13 @@ void runNextRoundRobinProcess(queue *runningProcesses)
     else
     {
         // *shm_ptr = current->processID * -1;
-        printf("process %d is running\n", current->id);
-        kill(current->processID, SIGCONT);
-        kill(current->processID, SIGUSR2);
+        continueProcess(current);
         // printf("continued : %d\n", current->processID);
     }
 }
+
+
+
 void checkForNewRoundRobinProcess(int msgqID, queue *runningProcesses)
 {
     struct processBuff buff;
@@ -74,6 +82,7 @@ void checkForNewRoundRobinProcess(int msgqID, queue *runningProcesses)
             runningProcesses->current = runningProcesses->head;
     }
 }
+
 void moveToNextRoundRobinProcess(queue *runningProcesses)
 {
     PCB *current = runningProcesses->current;
@@ -84,6 +93,7 @@ void moveToNextRoundRobinProcess(queue *runningProcesses)
     // send signal to the current process to stop it
     if (current->processID != -1)
     {
+
         // printf("process %d is running\n", current->processID);
         kill(current->processID, SIGUSR1);
     }
@@ -134,7 +144,7 @@ int getShmKey()
 int main(int argc, char *argv[])
 {
     queue *runningProcesses = createQueue();
-    // srtnProcesses = createSrtnQueue();
+    srtnQueue* srtnProcesses = createSrtnQueue();
     signal(SIGUSR1, SIGUSR1_handler);
     int key = getShmKey();
     initClk();
@@ -154,6 +164,7 @@ int main(int argc, char *argv[])
     case HPF:
         break;
     case SRTN:
+        shortestRemainingTimeNext(srtnProcesses0j, msgq_processGenerator_id);
         break;
     case RR:
         RoundRobin(runningProcesses, msgq_processGenerator_id);
@@ -166,27 +177,81 @@ int main(int argc, char *argv[])
     shmctl(key, IPC_RMID, (struct shmid_ds *)0);
     // upon termination release the clock resources.
     destroyClk(true);
+
+    return 0;
 }
-// void shortestRemainingTimeNext(PCB *process)
-// {
 
-//     if (isSrtnEmpty(srtnProcesses))
-//     {
-//         currentSrtnProcess = process;
-//         startNewProcess(process);
-//     }
 
-//     else
-//     {
+void deleteCurrentSRTNProcess() {
+    free(currentSrtnProcess);
+    currentDeleted = false;
+}
 
-//         if (process->remainingTime < currentSrtnProcess->remainingTime)
-//         {
-//             kill(currentSrtnProcess->processID, SIGINT);
-//             srtnQueueInsert(srtnProcesses, currentSrtnProcess);
-//             currentSrtnProcess = process;
-//             startNewProcess(process);
-//         }
-//         else
-//             srtnQueueInsert(srtnProcesses, process);
-//     }
-// }
+void runNextSRTNProcess(srtnQueue* srtnProcesses) {
+    currentSrtnProcess = dequeueSrtnQueue(srtnProcesses);
+    if(!currentSrtnProcess)
+        return;
+    if (currentSrtnProcess->processID == -1)
+    {
+        startNewProcess(currentSrtnProcess);
+        cnt++;
+    }
+    else
+    {
+        // *shm_ptr = current->processID * -1;
+        continueProcess(currentSrtnProcess);
+        // printf("continued : %d\n", current->processID);
+    }
+}
+
+void checkForNewSRTNProcess(int msgqID)
+{
+    struct processBuff buff;
+    while (msgrcv(msgqID, &buff, 14, 0, IPC_NOWAIT) != -1)
+    {
+        PCB *newProcess;
+        newProcess = createNewProcess(buff.id, buff.arrivalTime,
+                                      buff.remainingTime, buff.priority);
+        newSRTNProcess(newProcess);
+    }
+}
+
+
+void shortestRemainingTimeNext(srtnQueue *srtnProcesses, int msgqID) {
+    while (1)
+    {
+        checkForNewSRTNProcess(msgqID); 
+        if (currentDeleted)
+        {
+            deleteCurrentSRTNProcess();
+            runNextSRTNProcess(srtnProcesses);
+        } 
+    }   
+}
+
+void newSRTNProcess(srtnQueue *srtnProcesses, PCB *process){
+
+     if (isSrtnEmpty(srtnProcesses) && !currentSrtnProcess)
+     {
+         currentSrtnProcess = process;
+         startNewProcess(process);
+     }
+
+     else
+     {
+
+         if (process->remainingTime < currentSrtnProcess->remainingTime)
+         {
+             *shm_ptr = -1;
+             kill(currentSrtnProcess->processID, SIGUSR1);
+             while(*shm_ptr == -1);
+             currentSrtnProcess->remainingTime = *shm_ptr;
+             srtnQueueInsert(srtnProcesses, currentSrtnProcess);
+             currentSrtnProcess = process;
+             startNewProcess(process);
+         }
+         
+         else
+             srtnQueueInsert(srtnProcesses, process);
+     }
+}

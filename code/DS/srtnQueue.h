@@ -33,8 +33,8 @@ void srtnQueueInsert(srtnQueue *q, PCB *newProcess)
 
     if (!q->head)
     {
-        q->top = q->head = newProcess;
-        newProcess->next = q->tail = NULL;
+        q->top = q->head = q->tail  = newProcess;
+        newProcess->next = NULL;
         return;
     }
 
@@ -58,23 +58,19 @@ void srtnQueueInsert(srtnQueue *q, PCB *newProcess)
         linkTwoPointers(tempPtr->prev, newProcess);
 }
 
-void srtnQueueDeleteFirst(srtnQueue *q)
+PCB* dequeueSrtnQueue(srtnQueue *q)
 {
     if (q->head == NULL)
     {
         perror("No process in the queue");
         return;
     }
+    // Do not forget to delete the pointer in the main
     q->top = q->head;
-    q->head = q->head->next;
-    q->top = q->head;
-    free(q->top);
+    q->top->next = NULL;
+    q->head = q->head->next; 
     q->size--;
-}
-
-PCB *peek()
-{
-    return head;
+    return q->top;
 }
 
 bool isSrtnEmpty(srtnQueue *q)
