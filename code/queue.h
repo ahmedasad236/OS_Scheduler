@@ -125,17 +125,18 @@ bool isEmpty(queue *q)
 void printQueue(queue *q)
 {
     int s = q->size;
-    if (!q->current)
-        q->current = q->head;
+    printf("size : %d\n", s);
+    PCB *cur = q->current;
+    if (!cur)
+        cur = q->head;
     for (int i = 0; i < s; i++)
     {
-        printf("%d ", q->current->id);
+        printf("%d ", cur->id);
         if (q->current == NULL)
         {
             printf("NULL wrong\n");
             break;
         }
-        q->current = q->current->next;
+        cur = cur->next;
     }
-    q->size = s;
 }

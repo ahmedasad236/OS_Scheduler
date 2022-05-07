@@ -4,21 +4,13 @@
 int remaining_time;
 int *shm_ptr;
 
-// void SIGUSR1_handler(int sig)
-// {
-//     signal(SIGUSR1, SIGUSR1_handler);
-//     raise(SIGSTOP);
-// }
-// void SIGUSR2_handler(int sig)
-// {
-//     raise(SIGCONT);
-//     signal(SIGUSR2, SIGUSR2_handler);
-// }
-// void SIGCONT_handler(int sig)
-// {
-//     printf("hello world\n");
-//     signal(SIGCONT, SIGCONT_handler);
-// }
+int startTime;
+void SIGUSR1_handler(int sig)
+{
+    remaining_time -= (getClk() - startTime) > 0 ? (getClk() - startTime) : 0;
+    signal(SIGUSR1, SIGUSR1_handler);
+    raise(SIGSTOP);
+}
 int main(int argc, char *argv[])
 {
     initClk();
@@ -28,16 +20,25 @@ int main(int argc, char *argv[])
     remaining_time = atoi(argv[1]);
     int scheduler_id = atoi(argv[2]);
     int shm_id = shmget(shm_key, sizeof(int), 0666 | IPC_CREAT);
-    shm_ptr = (int *)shmat(shm_id, NULL, 0);
+    int *shm_ptr = (int *)shmat(shm_id, NULL, 0);
+    signal(SIGUSR1 , SIGUSR1_handler);
+    printf("id : %d\n", *shm_ptr);
     *shm_ptr = getpid();
     int clk = getClk();
-    // signal(SIGUSR1, SIGUSR1_handler);
-    // signal(SIGUSR2, SIGUSR2_handler);
-    // signal(SIGCONT, SIGCONT_handler);
+    startTime = getClk();
     while (remaining_time > 0)
     {
+        if (*shm_ptr == -1 * getpid())
+        {
+            startTime = getClk();
+            *shm_ptr = -1;
+            // printf("my process continued\n");
+        }
         // printf("process_id : %d,remaining_time : %d\n", getpid(), remaining_time);
+        // printf("process # %d is running and remaining time : %d\n", getpid(), remaining_time);
     }
+    printf("process finished ID : %d\n", getpid());
+    // shmctl(shm_id, IPC_RMID, (struct shmid_ds *)0);
     kill(scheduler_id, SIGUSR1);
     // destroyClk(false);
     return 0;

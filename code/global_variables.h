@@ -1,4 +1,4 @@
-#define shm_key 1234
+#define shm_key 34
 #define time_slot 1
 
 typedef enum ALGORITHM
