@@ -14,6 +14,7 @@ void SIGUSR1_handler(int sig)
 {
     remaining_time -= (getClk() - startTime) > 0 ? (getClk() - startTime) : 0;
     signal(SIGUSR1, SIGUSR1_handler);
+    *shm_ptr = remaining_time;
     raise(SIGSTOP);
 }
 int main(int argc, char *argv[])
