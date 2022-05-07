@@ -1,3 +1,4 @@
+#include "../globals/PCB.h"
 typedef struct PCB PCB;
 typedef struct srtnQueue
 {
@@ -5,7 +6,7 @@ typedef struct srtnQueue
     PCB *head;
     PCB *tail;
     PCB *top;
-}srtnQueue;
+} srtnQueue;
 
 srtnQueue *createSrtnQueue()
 {
@@ -17,30 +18,34 @@ srtnQueue *createSrtnQueue()
     return newQueue;
 }
 
-void linkTwoPointers(PCB* p1, PCB* p2) {
+void linkTwoPointers(PCB *p1, PCB *p2)
+{
     p2->next = p1->next;
     p1->next->prev = p2;
     p1->next = p2;
     p2->prev = p1;
 }
 
-void srtnQueueInsert(srtnQueue* q, PCB *newProcess)
+void srtnQueueInsert(srtnQueue *q, PCB *newProcess)
 {
-    
+
     q->size++;
-    
-    if(!head){
+
+    if (!q->head)
+    {
         q->top = q->head = newProcess;
         newProcess->next = q->tail = NULL;
         return;
     }
-    
-    PCB* tempPtr = q->head;
-    while(tempPtr->next && newProcess->remainingTime >= tempPtr->remainingTime) tempPtr = tempPtr->next;
-    
-    
-    if(tempPtr == q->tail){
-        if(newProcess->remainingTime >= q->tail->remainingTime){
+
+    PCB *tempPtr = q->head;
+    while (tempPtr->next && newProcess->remainingTime >= tempPtr->remainingTime)
+        tempPtr = tempPtr->next;
+
+    if (tempPtr == q->tail)
+    {
+        if (newProcess->remainingTime >= q->tail->remainingTime)
+        {
             q->tail->next = newProcess;
             newProcess->prev = q->tail;
             q->tail = newProcess;
@@ -49,12 +54,11 @@ void srtnQueueInsert(srtnQueue* q, PCB *newProcess)
             linkTwoPointers(q->tail->prev, newProcess);
     }
 
-    else 
+    else
         linkTwoPointers(tempPtr->prev, newProcess);
 }
 
-
-void srtnQueueDeleteFirst(srtnQueue*q)
+void srtnQueueDeleteFirst(srtnQueue *q)
 {
     if (q->head == NULL)
     {
@@ -68,11 +72,12 @@ void srtnQueueDeleteFirst(srtnQueue*q)
     q->size--;
 }
 
-PCB* peek(){
+PCB *peek()
+{
     return head;
 }
 
-bool isSrtnEmpty(srtnQueue*q)
+bool isSrtnEmpty(srtnQueue *q)
 {
     return q->size == 0;
 }
