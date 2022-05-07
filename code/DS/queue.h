@@ -1,3 +1,4 @@
+#include "../globals/PCB.h"
 typedef struct PCB PCB;
 typedef struct queue
 {
@@ -82,20 +83,17 @@ void deleteCurrentProcess(queue *q)
         return;
     }
     q->size--;
-    if (q->current->next == NULL)
+    if (q->size == 0)
     {
-        free(q->head);
-        q->head = q->tail = NULL;
+        free(q->current);
+        q->head = q->tail = q->current = NULL;
         return;
     }
-
     q->current->prev->next = q->current->next;
     q->current->next->prev = q->current->prev;
     PCB *temp = q->current;
     q->current = q->current->next;
     free(temp);
-    if (q->current->next == q->current)
-        q->current->next = q->current->prev = NULL;
 }
 void deleteProcess(queue *q, int pid)
 {
