@@ -127,7 +127,8 @@ void printQueue(queue *q)
     PCB *cur = q->current;
     if (!cur)
         cur = q->head;
-    for (int i = 0; i < s; i++)
+    int i;
+    for (i = 0; i < s; i++)
     {
         printf("%d ", cur->id);
         if (q->current == NULL)
