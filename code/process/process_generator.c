@@ -34,7 +34,6 @@ int main(int argc, char *argv[])
         PCB *newProcess = createNewProcess(id, arrivalTime, remainingTime, priority);
         insertLast(newProcess);
     }
-    // printf("size : %d" , );
     // 2. Ask the user for the chosen scheduling algorithm and its parameters, if there are any.
     ALGORITHM_TYPE schedulerAlgorithm;
     do
@@ -82,12 +81,6 @@ int main(int argc, char *argv[])
         }
     }
     // testing and ok to be deleted
-    processTemp.mtype = 0;
-    processTemp.id = -1;
-    processTemp.arrivalTime = -1;
-    processTemp.priority = -1;
-    processTemp.remainingTime = -1;
-    msgsnd(msgq_scheduler_id, &processTemp, 4, !IPC_NOWAIT);
     printf("done sending : %d\n", getClk());
     // to not destroy the clock till ctrl+c also for temporary cleaning
     while (1)
