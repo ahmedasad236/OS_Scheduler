@@ -1,3 +1,5 @@
+#ifndef __HEADERS_H__
+#define __HEADERS_H__
 #include <stdio.h> //if you don't use scanf/printf change this include
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -10,7 +12,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
-
 typedef short bool;
 #define true 1
 #define false 0
@@ -60,3 +61,4 @@ void destroyClk(bool terminateAll)
         killpg(getpgrp(), SIGINT);
     }
 }
+#endif

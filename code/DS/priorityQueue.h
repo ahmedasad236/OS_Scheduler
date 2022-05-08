@@ -1,3 +1,5 @@
+#ifndef __PRIORITYQUEUE_H__
+#define __PRIORITYQUEUE_H__
 typedef struct PCB PCB;
 typedef struct priQueue
 {
@@ -109,3 +111,4 @@ void printPriQueue(priQueue *q)
     }
     printf("\n");
 }
+#endif

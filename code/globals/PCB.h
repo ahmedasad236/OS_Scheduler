@@ -1,3 +1,5 @@
+#ifndef __PCB_H__
+#define __PCB_H__
 #include "headers.h"
 typedef struct PCB
 {
@@ -29,3 +31,4 @@ PCB *createNewProcess(int id, int arrivalTime, int runTime, short priority)
     newProcess->processID = -1;
     return newProcess;
 }
+#endif

@@ -1,3 +1,5 @@
+#ifndef __QUEUE_H__
+#define __QUEUE_H__
 #include "../globals/PCB.h"
 typedef struct PCB PCB;
 typedef struct queue
@@ -139,3 +141,4 @@ void printQueue(queue *q)
         cur = cur->next;
     }
 }
+#endif
