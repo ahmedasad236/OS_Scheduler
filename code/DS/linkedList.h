@@ -1,3 +1,7 @@
+
+#ifndef __LINKEDLIST_H__
+#define __LINKEDLIST_H__
+
 #include "../globals/PCB.h"
 int processTableLength = 0;
 PCB *head = NULL;
@@ -48,3 +52,4 @@ void printLinkList()
         current = current->next;
     };
 }
+#endif
