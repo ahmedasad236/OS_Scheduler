@@ -109,7 +109,10 @@ void checkForNewRoundRobinProcess(int msgqID, queue *runningProcesses)
                                       buff.remainingTime, buff.priority);
         insertNewProcess(runningProcesses, newProcess);
         if (!runningProcesses->current)
+        {
             runningProcesses->current = runningProcesses->head;
+            runNextRoundRobinProcess(runningProcesses);
+        }
     }
 }
 
@@ -118,14 +121,9 @@ void moveToNextRoundRobinProcess(queue *runningProcesses)
     PCB *current = runningProcesses->current;
     if (current == NULL || current->next == current)
         return;
-    if (current->processID == -1 && current == current->next)
-        printf("only one process\n");
     // send signal to the current process to stop it
     if (current->processID != -1)
-    {
-        // stopProcess(current->processID);
         kill(current->processID, SIGUSR1);
-    }
     runningProcesses->current = current->next;
     runNextRoundRobinProcess(runningProcesses);
 }
