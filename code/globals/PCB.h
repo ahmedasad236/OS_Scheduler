@@ -7,6 +7,7 @@ typedef struct PCB
     int remainingTime;
     int startTime;
     int finishTime;
+    int waitingTime;
     short priority;
     bool state; // 0=>ready 1=>running
     struct PCB *next;

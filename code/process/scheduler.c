@@ -5,8 +5,9 @@
 #include "../DS/queue.h"
 #include "../DS/srtnQueue.h"
 #include <string.h>
+#include "../DS/priorityQueue.h"
 int cnt = 0;
-PCB *currentSrtnProcess = NULL;
+PCB *currentProcess = NULL;
 int *shm_ptr = NULL;
 bool currentDeleted = false;
 
@@ -31,6 +32,7 @@ void startNewProcess(PCB *newProcess)
     char *processRunMessage = malloc(sizeof(char) * 100);
     *shm_ptr = -1;
     snprintf(processRunMessage, 100, "gcc process.c -o process_%d && ./process_%d %d %d &", newProcess->id, newProcess->id, newProcess->remainingTime, getpid());
+    printf("%s\n", processRunMessage);
     system(processRunMessage);
     while (*shm_ptr == -1)
         ;
@@ -59,14 +61,14 @@ void changeCurrentProcessRemainingTime()
 
     while (*shm_ptr == -1)
         ;
-    currentSrtnProcess->remainingTime = *shm_ptr;
+    currentProcess->remainingTime = *shm_ptr;
 }
 void newSRTNProcess(srtnQueue *srtnProcesses, PCB *process)
 {
 
-    if (isSrtnEmpty(srtnProcesses) && !currentSrtnProcess)
+    if (isSrtnEmpty(srtnProcesses) && !currentProcess)
     {
-        currentSrtnProcess = process;
+        currentProcess = process;
         startNewProcess(process);
     }
 
@@ -75,16 +77,16 @@ void newSRTNProcess(srtnQueue *srtnProcesses, PCB *process)
 
         // send signal to current process to get remaining time
         *shm_ptr = -1;
-        kill(currentSrtnProcess->processID, SIGUSR1);
+        kill(currentProcess->processID, SIGUSR1);
         changeCurrentProcessRemainingTime();
 
-        if (process->remainingTime < currentSrtnProcess->remainingTime)
+        if (process->remainingTime < currentProcess->remainingTime)
         {
             *shm_ptr = -1;
-            stopProcess(currentSrtnProcess->processID);
+            stopProcess(currentProcess->processID);
             changeCurrentProcessRemainingTime();
-            srtnQueueInsert(srtnProcesses, currentSrtnProcess);
-            currentSrtnProcess = process;
+            srtnQueueInsert(srtnProcesses, currentProcess);
+            currentProcess = process;
             startNewProcess(process);
         }
 
@@ -174,6 +176,7 @@ void RoundRobin(queue *runningProcesses, int msgqID)
         }
     }
 }
+////////////////////////////////////////////////////////////////////////////////////
 
 int getShmKey()
 {
@@ -184,25 +187,25 @@ int getShmKey()
 
 void deleteCurrentSRTNProcess()
 {
-    if (currentSrtnProcess)
-        free(currentSrtnProcess);
+    if (currentProcess)
+        free(currentProcess);
     currentDeleted = false;
 }
 
 void runNextSRTNProcess(srtnQueue *srtnProcesses)
 {
-    currentSrtnProcess = dequeueSrtnQueue(srtnProcesses);
-    if (!currentSrtnProcess)
+    currentProcess = dequeueSrtnQueue(srtnProcesses);
+    if (!currentProcess)
         return;
-    if (currentSrtnProcess->processID == -1)
+    if (currentProcess->processID == -1)
     {
-        startNewProcess(currentSrtnProcess);
+        startNewProcess(currentProcess);
         cnt++;
     }
     else
     {
         // *shm_ptr = current->processID * -1;
-        continueProcess(currentSrtnProcess->processID);
+        continueProcess(currentProcess->processID);
         // printf("continued : %d\n", current->processID);
     }
 }
@@ -229,16 +232,69 @@ void shortestRemainingTimeNext(srtnQueue *srtnProcesses, int msgqID)
         checkForNewSRTNProcess(srtnProcesses, msgqID);
         if (currentDeleted)
         {
-            printf("SRTN Process : %d\n", currentSrtnProcess->processID);
+            printf("SRTN Process : %d\n", currentProcess->processID);
             deleteCurrentSRTNProcess();
             runNextSRTNProcess(srtnProcesses);
         }
     }
 }
+
+/////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////// HPF /////////////////////////////////////////
+void checkForNewHPFProcess(priQueue* hpfProcesses, int msgqID) {
+
+    struct processBuff buff;
+    while (msgrcv(msgqID, &buff, 14, 0, IPC_NOWAIT) != -1)
+    {
+        PCB *newProcess;
+        newProcess = createNewProcess(buff.id, buff.arrivalTime,
+                                      buff.remainingTime, buff.priority);
+
+        printf("id: %d, pri = %d\n", newProcess->id, newProcess->priority);        
+        priQueueInsert(hpfProcesses, newProcess);
+        printf("SIZE: %d\n", hpfProcesses->size);
+    }
+}
+
+void startCurrentHPFProcess(priQueue* hpfProcesses) {
+    currentProcess = hpfProcesses->head;
+    if(!currentProcess) return;
+    int clk = getClk();
+    currentProcess->startTime = clk;
+    currentProcess->waitingTime = clk - currentProcess->arrivalTime; 
+    startNewProcess(currentProcess);
+}
+
+void finishHPFProcess(priQueue* hpfProcesses) {
+    currentProcess->finishTime = getClk();
+    dequeuePriQueue(hpfProcesses);
+    currentProcess = NULL;
+    currentDeleted = false;
+}
+
+void highestPriorityFirst(priQueue* hpfProcesses, int msgqID) {
+    int clk = 0;
+    while(1) {
+        checkForNewHPFProcess(hpfProcesses, msgqID);
+        if(!currentProcess) {
+            startCurrentHPFProcess(hpfProcesses);       
+        }
+
+        if(currentDeleted) {
+            finishHPFProcess(hpfProcesses);
+        }
+
+    }
+
+}
+
+
 int main(int argc, char *argv[])
 {
     queue *runningProcesses = createQueue();
     srtnQueue *srtnProcesses = createSrtnQueue();
+    priQueue* hpfProcesses = createPriQueue();
+    
     signal(SIGUSR1, SIGUSR1_handler);
     int key = getShmKey();
     initClk();
@@ -256,6 +312,7 @@ int main(int argc, char *argv[])
     switch (algorithm.algoType)
     {
     case HPF:
+        highestPriorityFirst(hpfProcesses, msgq_processGenerator_id);
         break;
     case SRTN:
         shortestRemainingTimeNext(srtnProcesses, msgq_processGenerator_id);
