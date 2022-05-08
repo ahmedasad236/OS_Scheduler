@@ -30,7 +30,7 @@ void startNewProcess(PCB *newProcess)
 {
     char *processRunMessage = malloc(sizeof(char) * 100);
     *shm_ptr = -1;
-    snprintf(processRunMessage, 100, "gcc process.c -o process_%d && ./process_%d %d %d &", newProcess->id, newProcess->id, newProcess->remainingTime, getpid());
+    snprintf(processRunMessage, 100, "gcc process.c -o process__%d && ./process__%d %d %d &", newProcess->id, newProcess->id, newProcess->remainingTime, getpid());
     printf("%s\n", processRunMessage);
     system(processRunMessage);
     while (*shm_ptr == -1)
@@ -294,7 +294,7 @@ int main(int argc, char *argv[])
 {
     queue *runningProcesses = createQueue();
     srtnQueue *srtnProcesses = createSrtnQueue();
-    priQueue *hpfProcesses = createPriQueue();
+    priQueue *hpfProcesses = createPriQueue(compHPFProcesses);
 
     signal(SIGUSR1, SIGUSR1_handler);
     int key = getShmKey();

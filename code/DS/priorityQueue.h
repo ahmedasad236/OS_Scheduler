@@ -5,28 +5,36 @@ typedef struct priQueue
     PCB *head;
     PCB *tail;
     PCB *top;
+    PCB *(*priorityComp)(void *, PCB *);
 } priQueue;
 
-priQueue *createPriQueue()
+// send priority function as parameter
+priQueue *createPriQueue(PCB *(*F)(void *, PCB *))
 {
     priQueue *newQueue = (priQueue *)malloc(sizeof(priQueue));
     newQueue->size = 0;
     newQueue->head = NULL;
     newQueue->tail = NULL;
     newQueue->top = NULL;
+    // assign the function to the queue
+    newQueue->priorityComp = F;
     return newQueue;
 }
-
-/*
-void linkTwoPointers(PCB *p1, PCB *p2)
+PCB *compHPFProcesses(void *q, PCB *newProcess)
 {
-    p2->next = p1->next;
-    p1->next->prev = p2;
-    p1->next = p2;
-    p2->prev = p1;
-}
-*/
 
+    PCB *tempPtr = ((priQueue *)q)->head;
+    while (tempPtr && newProcess->priority >= tempPtr->priority)
+        tempPtr = tempPtr->next;
+    return tempPtr;
+}
+PCB *compSRTNProcesses(void *q, PCB *newProcess)
+{
+    PCB *tempPtr = ((priQueue *)q)->head;
+    while (tempPtr && newProcess->remainingTime >= tempPtr->remainingTime)
+        tempPtr = tempPtr->next;
+    return tempPtr;
+}
 void priQueueInsert(priQueue *q, PCB *newProcess)
 {
     q->size++;
@@ -37,10 +45,9 @@ void priQueueInsert(priQueue *q, PCB *newProcess)
         return;
     }
 
-    PCB *tempPtr = q->head;
-    while (tempPtr && newProcess->priority >= tempPtr->priority)
-        tempPtr = tempPtr->next;
+    // call function as parameter
 
+    PCB *tempPtr = q->priorityComp(q, newProcess);
     if (!tempPtr)
     {
         newProcess->prev = q->tail;
