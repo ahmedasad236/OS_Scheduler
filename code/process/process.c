@@ -13,11 +13,21 @@ void SIGUSR2_handler(int sig)
 void SIGUSR1_handler(int sig)
 {
     remaining_time -= (getClk() - startTime) > 0 ? (getClk() - startTime) : 0;
-    // if (remaining_time < 0)
-    //     remaining_time = 0;
-    // *shm_ptr = remaining_time;
     signal(SIGUSR1, SIGUSR1_handler);
     raise(SIGSTOP);
+}
+void SIGHUP_handler(int sig)
+{
+    remaining_time -= (getClk() - startTime) > 0 ? (getClk() - startTime) : 0;
+    *shm_ptr = remaining_time;
+    signal(SIGUSR1, SIGUSR1_handler);
+    raise(SIGSTOP);
+}
+void SIGBUS_handler(int sig)
+{
+    remaining_time -= (getClk() - startTime) > 0 ? (getClk() - startTime) : 0;
+    *shm_ptr = remaining_time;
+    signal(SIGBUS, SIGBUS_handler);
 }
 int main(int argc, char *argv[])
 {
@@ -31,6 +41,8 @@ int main(int argc, char *argv[])
     shm_ptr = (int *)shmat(shm_id, NULL, 0);
     signal(SIGUSR1, SIGUSR1_handler);
     signal(SIGUSR2, SIGUSR2_handler);
+    signal(SIGHUP, SIGHUP_handler);
+    signal(SIGBUS, SIGBUS_handler);
     *shm_ptr = getpid();
     int clk = getClk();
     startTime = getClk();
