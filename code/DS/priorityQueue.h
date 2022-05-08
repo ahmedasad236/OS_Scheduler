@@ -40,50 +40,65 @@ void priQueueInsert(priQueue *q, PCB *newProcess)
     PCB *tempPtr = q->head;
     while (tempPtr && newProcess->priority >= tempPtr->priority)
         tempPtr = tempPtr->next;
-    
-    if(!tempPtr) {
+
+    if (!tempPtr)
+    {
         newProcess->prev = q->tail;
         newProcess->next = NULL;
         q->tail->next = newProcess;
         q->tail = newProcess;
     }
-    
-    else if(tempPtr == q->head) {
+
+    else if (tempPtr == q->head)
+    {
         newProcess->prev = NULL;
         newProcess->next = q->head;
         q->head->prev = newProcess;
         q->head = newProcess;
     }
-
-    else {
+    else
+    {
         newProcess->next = tempPtr;
         newProcess->prev = tempPtr->prev;
+        tempPtr->prev->next = newProcess;
         tempPtr->prev = newProcess;
     }
 }
 
-void dequeuePriQueue(priQueue *q)
+PCB *dequeuePriQueue(priQueue *q)
 {
     if (q->head == NULL)
     {
         perror("No process in the queue");
-        return;
+        return NULL;
     }
     // Do not forget to delete the pointer in the main
     PCB *tempPtr = q->head;
-    if(tempPtr == q->tail){
+    if (tempPtr == q->tail)
+    {
         q->head = q->tail = NULL;
     }
-    else {
+    else
+    {
         q->head = q->head->next;
         q->head->prev = NULL;
     }
 
     q->size--;
-    free(tempPtr);
+    return tempPtr;
 }
 
 bool isPriorityQueueEmpty(priQueue *q)
 {
     return q->size == 0;
+}
+void printPriQueue(priQueue *q)
+{
+    PCB *tempPtr = q->head;
+    while (tempPtr)
+    {
+        printf("%d ", tempPtr->id);
+        tempPtr = tempPtr->next;
+    }
+    printf("\n");
 }

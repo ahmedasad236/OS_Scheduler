@@ -28,7 +28,6 @@ struct processBuff
 
 void startNewProcess(PCB *newProcess)
 {
-    // run the process and send remaining time to it
     char *processRunMessage = malloc(sizeof(char) * 100);
     *shm_ptr = -1;
     snprintf(processRunMessage, 100, "gcc process.c -o process_%d && ./process_%d %d %d &", newProcess->id, newProcess->id, newProcess->remainingTime, getpid());
@@ -241,7 +240,8 @@ void shortestRemainingTimeNext(srtnQueue *srtnProcesses, int msgqID)
 
 /////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// HPF /////////////////////////////////////////
-void checkForNewHPFProcess(priQueue* hpfProcesses, int msgqID) {
+void checkForNewHPFProcess(priQueue *hpfProcesses, int msgqID)
+{
 
     struct processBuff buff;
     while (msgrcv(msgqID, &buff, 14, 0, IPC_NOWAIT) != -1)
@@ -250,51 +250,52 @@ void checkForNewHPFProcess(priQueue* hpfProcesses, int msgqID) {
         newProcess = createNewProcess(buff.id, buff.arrivalTime,
                                       buff.remainingTime, buff.priority);
 
-        printf("id: %d, pri = %d\n", newProcess->id, newProcess->priority);        
         priQueueInsert(hpfProcesses, newProcess);
-        printf("SIZE: %d\n", hpfProcesses->size);
     }
 }
 
-void startCurrentHPFProcess(priQueue* hpfProcesses) {
-    currentProcess = hpfProcesses->head;
-    if(!currentProcess) return;
+void startCurrentHPFProcess(priQueue *hpfProcesses)
+{
+    currentProcess = dequeuePriQueue(hpfProcesses);
+    if (!currentProcess)
+        return;
     int clk = getClk();
     currentProcess->startTime = clk;
-    currentProcess->waitingTime = clk - currentProcess->arrivalTime; 
+    currentProcess->waitingTime = clk - currentProcess->arrivalTime;
     startNewProcess(currentProcess);
 }
 
-void finishHPFProcess(priQueue* hpfProcesses) {
+void finishHPFProcess(priQueue *hpfProcesses)
+{
     currentProcess->finishTime = getClk();
-    dequeuePriQueue(hpfProcesses);
+    free(currentProcess);
     currentProcess = NULL;
     currentDeleted = false;
 }
 
-void highestPriorityFirst(priQueue* hpfProcesses, int msgqID) {
+void highestPriorityFirst(priQueue *hpfProcesses, int msgqID)
+{
     int clk = 0;
-    while(1) {
+    while (1)
+    {
         checkForNewHPFProcess(hpfProcesses, msgqID);
-        if(!currentProcess) {
-            startCurrentHPFProcess(hpfProcesses);       
+        if (!currentProcess)
+        {
+            startCurrentHPFProcess(hpfProcesses);
         }
-
-        if(currentDeleted) {
+        if (currentDeleted)
+        {
             finishHPFProcess(hpfProcesses);
         }
-
     }
-
 }
-
 
 int main(int argc, char *argv[])
 {
     queue *runningProcesses = createQueue();
     srtnQueue *srtnProcesses = createSrtnQueue();
-    priQueue* hpfProcesses = createPriQueue();
-    
+    priQueue *hpfProcesses = createPriQueue();
+
     signal(SIGUSR1, SIGUSR1_handler);
     int key = getShmKey();
     initClk();
