@@ -4,28 +4,30 @@
 int remaining_time;
 int *shm_ptr;
 
-int startTime;
+int resumeTime;
 void SIGUSR2_handler(int sig)
 {
-    startTime = getClk();
+    resumeTime = getClk();
     signal(SIGUSR2, SIGUSR2_handler);
 }
 void SIGUSR1_handler(int sig)
 {
-    remaining_time -= (getClk() - startTime) > 0 ? (getClk() - startTime) : 0;
+    remaining_time -= (getClk() - resumeTime) > 0 ? (getClk() - resumeTime) : 0;
     signal(SIGUSR1, SIGUSR1_handler);
+    *shm_ptr = remaining_time;
     raise(SIGSTOP);
 }
 void SIGHUP_handler(int sig)
 {
-    remaining_time -= (getClk() - startTime) > 0 ? (getClk() - startTime) : 0;
+    remaining_time -= (getClk() - resumeTime) > 0 ? (getClk() - resumeTime) : 0;
     *shm_ptr = remaining_time;
     signal(SIGUSR1, SIGUSR1_handler);
     raise(SIGSTOP);
 }
 void SIGBUS_handler(int sig)
 {
-    remaining_time -= (getClk() - startTime) > 0 ? (getClk() - startTime) : 0;
+    remaining_time -= (getClk() - resumeTime) > 0 ? (getClk() - resumeTime) : 0;
+    resumeTime = getClk();
     *shm_ptr = remaining_time;
     signal(SIGBUS, SIGBUS_handler);
 }
@@ -45,15 +47,15 @@ int main(int argc, char *argv[])
     signal(SIGBUS, SIGBUS_handler);
     *shm_ptr = getpid();
     int clk = getClk();
-    startTime = getClk();
-    printf("process_id : %d\n", getpid());
+    resumeTime = getClk();
+    printf("process_id : %d , starttime :%d , remaining_time : %d , resume_time : %d\n", getpid(), getClk(), remaining_time, resumeTime);
     while (remaining_time > 0)
     {
-        // printf("remaining time : %d, clk : %d , stt : %d\n", remaining_time, getClk(), startTime);
-        if (remaining_time <= (getClk() - startTime))
+        // printf("remaining time : %d, clk : %d , stt : %d\n", remaining_time, getClk(), resumeTime);
+        if (remaining_time <= (getClk() - resumeTime))
             break;
     }
-    printf("process finished ID : %d\n", getpid());
+    printf("process finished ID : %d at time :%d\n", getpid(), getClk());
     kill(scheduler_id, SIGUSR1);
     return 0;
 }

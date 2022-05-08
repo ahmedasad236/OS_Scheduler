@@ -9,7 +9,7 @@ int cnt = 0;
 PCB *currentProcess = NULL;
 int *shm_ptr = NULL;
 bool currentDeleted = false;
-
+// FILE *outFile = NULL;
 typedef struct ALGORITHM_TYPE
 {
     long mtype;
@@ -24,26 +24,33 @@ struct processBuff
     short priority;
     long mtype;
 };
-
+void outProcessInfo(PCB *p, char *state)
+{
+    FILE *outFile = fopen("process_info.txt", "a");
+    fprintf(outFile, "At time %d process %d %s arr : %d total : %d remain : %d wait : %d\n", getClk(), p->id, state, p->arrivalTime, p->totalRunTime, p->remainingTime, getClk() - p->arrivalTime - p->totalRunTime + p->remainingTime);
+    fclose(outFile);
+}
 void startNewProcess(PCB *newProcess)
 {
+    newProcess->waitingTime = getClk() - newProcess->arrivalTime;
     char *processRunMessage = malloc(sizeof(char) * 100);
     *shm_ptr = -1;
     snprintf(processRunMessage, 100, "gcc process.c -o process__%d && ./process__%d %d %d &", newProcess->id, newProcess->id, newProcess->remainingTime, getpid());
-    printf("%s\n", processRunMessage);
     system(processRunMessage);
     while (*shm_ptr == -1)
         ;
     newProcess->processID = *shm_ptr;
+    outProcessInfo(newProcess, "started");
 }
 void SIGUSR1_handler(int sig)
 {
     currentDeleted = true;
     signal(SIGUSR1, SIGUSR1_handler);
 }
-
-void continueProcess(int pid)
+void continueProcess(PCB *p)
 {
+    outProcessInfo(p, "continued");
+    int pid = p->processID;
     printf("process %d is running\n", pid);
     kill(pid, SIGCONT);
     kill(pid, SIGUSR2);
@@ -71,6 +78,7 @@ void newSRTNProcess(priQueue *srtnProcesses, PCB *process)
     printf("new remaining time :%d\n", currentProcess->remainingTime);
     if (process->remainingTime < currentProcess->remainingTime)
     {
+        outProcessInfo(currentProcess, "stopped");
         *shm_ptr = -1;
         kill(currentProcess->processID, SIGHUP);
         changeCurrentProcessRemainingTime();
@@ -95,7 +103,7 @@ void runNextRoundRobinProcess(queue *runningProcesses)
     }
     else
     {
-        continueProcess(current->processID);
+        continueProcess(current);
     }
 }
 
@@ -116,6 +124,15 @@ void checkForNewRoundRobinProcess(int msgqID, queue *runningProcesses)
     }
 }
 
+void stopProcess(PCB *current, int SIGNAL)
+{
+    *shm_ptr = -1;
+    kill(current->processID, SIGNAL);
+    while (*shm_ptr == -1)
+        ;
+    current->remainingTime = *shm_ptr;
+    outProcessInfo(current, "stopped");
+}
 void moveToNextRoundRobinProcess(queue *runningProcesses)
 {
     PCB *current = runningProcesses->current;
@@ -123,7 +140,7 @@ void moveToNextRoundRobinProcess(queue *runningProcesses)
         return;
     // send signal to the current process to stop it
     if (current->processID != -1)
-        kill(current->processID, SIGUSR1);
+        stopProcess(current, SIGUSR1);
     runningProcesses->current = current->next;
     runNextRoundRobinProcess(runningProcesses);
 }
@@ -136,8 +153,26 @@ char *itoa(int num)
     return str;
 }
 
+int getTATime(PCB *p)
+{
+    return p->finishTime - p->arrivalTime;
+}
+float getWTATime(PCB *p)
+{
+    return getTATime(p) * 1.0 / p->totalRunTime;
+}
+void outFinishProcessInfo(PCB *p)
+{
+    p->remainingTime = 0;
+    FILE *outFile = fopen("process_info.txt", "a");
+    fprintf(outFile, "At time %d process %d finished arr : %d total : %d remain : %d wait : %d TA : %d WTA: %.2f \n", getClk(), p->id, p->arrivalTime, p->totalRunTime, p->remainingTime, getClk() - p->arrivalTime - p->totalRunTime, getTATime(p), getWTATime(p));
+    fclose(outFile);
+}
 void deleteRoundRobinProcessAndMoveToNextOne(queue *runningProcesses)
 {
+    runningProcesses->current->finishTime = getClk();
+    // outProcessInfo(runningProcesses->current, "finished");
+    outFinishProcessInfo(runningProcesses->current);
     deleteCurrentProcess(runningProcesses);
     runNextRoundRobinProcess(runningProcesses);
     currentDeleted = false;
@@ -174,6 +209,9 @@ void deleteCurrentSRTNProcess()
 {
     if (currentProcess)
     {
+        currentProcess->remainingTime = 0;
+        currentProcess->finishTime = getClk();
+        outFinishProcessInfo(currentProcess);
         free(currentProcess);
         currentProcess = NULL;
     }
@@ -187,14 +225,12 @@ void runNextSRTNProcess(priQueue *srtnProcesses)
         return;
     if (currentProcess->processID == -1)
     {
-        printf("1\n");
         startNewProcess(currentProcess);
         cnt++;
     }
     else
     {
-        printf("2\n");
-        continueProcess(currentProcess->processID);
+        continueProcess(currentProcess);
     }
 }
 
@@ -206,7 +242,6 @@ void checkForNewSRTNProcess(priQueue *srtnProcesses, int msgqID)
         PCB *newProcess;
         newProcess = createNewProcess(buff.id, buff.arrivalTime,
                                       buff.remainingTime, buff.priority);
-
         printf("iam here\n");
         newSRTNProcess(srtnProcesses, newProcess);
     }
@@ -235,7 +270,6 @@ void checkForNewHPFProcess(priQueue *hpfProcesses, int msgqID)
         PCB *newProcess;
         newProcess = createNewProcess(buff.id, buff.arrivalTime,
                                       buff.remainingTime, buff.priority);
-
         priQueueInsert(hpfProcesses, newProcess);
     }
 }
@@ -246,14 +280,13 @@ void startCurrentHPFProcess(priQueue *hpfProcesses)
     if (!currentProcess)
         return;
     int clk = getClk();
-    currentProcess->startTime = clk;
-    currentProcess->waitingTime = clk - currentProcess->arrivalTime;
     startNewProcess(currentProcess);
 }
 
 void finishHPFProcess(priQueue *hpfProcesses)
 {
     currentProcess->finishTime = getClk();
+    outFinishProcessInfo(currentProcess);
     free(currentProcess);
     currentProcess = NULL;
     currentDeleted = false;
@@ -279,6 +312,7 @@ void highestPriorityFirst(priQueue *hpfProcesses, int msgqID)
 int main(int argc, char *argv[])
 {
     signal(SIGUSR1, SIGUSR1_handler);
+    // outFile = fopen("analysis.txt", "a");
     int key = getShmKey();
     initClk();
     int msgq_processGenerator_id;
