@@ -1,4 +1,3 @@
-#include "../globals/PCB.h"
 typedef struct PCB PCB;
 typedef struct srtnQueue
 {
@@ -28,25 +27,30 @@ void linkTwoPointers(PCB *p1, PCB *p2)
 
 void srtnQueueInsert(srtnQueue *q, PCB *newProcess)
 {
-
     q->size++;
-
     if (!q->head)
     {
-        q->top = q->head = q->tail  = newProcess;
-        newProcess->next = NULL;
+        q->top = q->head = q->tail = newProcess;
+        newProcess->next = newProcess->prev = NULL;
         return;
     }
-
     PCB *tempPtr = q->head;
     while (tempPtr->next && newProcess->remainingTime >= tempPtr->remainingTime)
         tempPtr = tempPtr->next;
 
-    if (tempPtr == q->tail)
+    if (tempPtr == q->head)
+    {
+        newProcess->next = q->head;
+        newProcess->prev = NULL;
+        q->head->prev = newProcess;
+        q->head = newProcess;
+    }
+    else if (tempPtr == q->tail)
     {
         if (newProcess->remainingTime >= q->tail->remainingTime)
         {
             q->tail->next = newProcess;
+            newProcess->next = NULL;
             newProcess->prev = q->tail;
             q->tail = newProcess;
         }
@@ -58,19 +62,19 @@ void srtnQueueInsert(srtnQueue *q, PCB *newProcess)
         linkTwoPointers(tempPtr->prev, newProcess);
 }
 
-PCB* dequeueSrtnQueue(srtnQueue *q)
+PCB *dequeueSrtnQueue(srtnQueue *q)
 {
     if (q->head == NULL)
     {
         perror("No process in the queue");
-        return;
+        return NULL;
     }
     // Do not forget to delete the pointer in the main
-    q->top = q->head;
-    q->top->next = NULL;
-    q->head = q->head->next; 
+    PCB *tempPtr = q->head;
+    q->head = q->head->next;
+    q->head->prev = NULL;
     q->size--;
-    return q->top;
+    return tempPtr;
 }
 
 bool isSrtnEmpty(srtnQueue *q)
