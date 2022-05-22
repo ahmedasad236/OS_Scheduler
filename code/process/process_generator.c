@@ -1,4 +1,4 @@
-#include "linkedList.h"
+#include "../DS/linkedList.h"
 #include <sys/ipc.h>
 #include <sys/msg.h>
 bool breaK = false;
@@ -34,7 +34,6 @@ int main(int argc, char *argv[])
         PCB *newProcess = createNewProcess(id, arrivalTime, remainingTime, priority);
         insertLast(newProcess);
     }
-    // printf("size : %d" , );
     // 2. Ask the user for the chosen scheduling algorithm and its parameters, if there are any.
     ALGORITHM_TYPE schedulerAlgorithm;
     do

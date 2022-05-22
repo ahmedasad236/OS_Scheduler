@@ -1,0 +1,5 @@
+code/process/*.out
+code/process/process__*
+code/process/sc
+code/process/PG
+code/process/test_file.txt

@@ -1,4 +1,8 @@
-#include "PCB.h"
+
+#ifndef __LINKEDLIST_H__
+#define __LINKEDLIST_H__
+
+#include "../globals/PCB.h"
 int processTableLength = 0;
 PCB *head = NULL;
 PCB *tail = NULL;
@@ -44,7 +48,8 @@ void printLinkList()
     current = head;
     while (current != NULL)
     {
-        printf("%d %d\n", current->id , current->arrivalTime);
+        printf("%d %d\n", current->id, current->arrivalTime);
         current = current->next;
     };
 }
+#endif
