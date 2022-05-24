@@ -54,7 +54,6 @@ void continueProcess(PCB *p)
 {
     outProcessInfo(p, "continued");
     int pid = p->processID;
-    printf("process %d is running\n", pid);
     kill(pid, SIGCONT);
     kill(pid, SIGUSR2);
 }

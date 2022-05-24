@@ -35,28 +35,11 @@ void queueInsert(queue *q, PCB *newProcess)
     newProcess->prev = q->tail;
     q->tail = newProcess;
 }
-void insertNewProcess(queue *q, PCB *newProcess)
-{
-    queueInsert(q, newProcess);
-    printf("i reached after inserting\n");
-    // if (q->current == NULL)
-    // {
-    //     queueInsert(q, newProcess);
-    //     return;
-    // }
-    // q->size++;
-    // newProcess->next = q->current;
-    // newProcess->prev = q->current->prev;
-    // q->current->prev->next = newProcess;
-    // q->current->prev = newProcess;
-    // printf(":: %p %p %p", newProcess, newProcess->prev, newProcess->next);
-}
 
 void queueDeleteFirst(queue *q)
 {
     if (q->head == NULL)
     {
-        perror("No process in the queue");
         return;
     }
     q->current = q->head;
@@ -81,7 +64,6 @@ void deleteCurrentProcess(queue *q)
 {
     if (q->current == NULL)
     {
-        perror("No process in the queue");
         return;
     }
     q->size--;
@@ -102,7 +84,6 @@ void deleteProcess(queue *q, int pid)
     PCB *process = queueFind(q, pid);
     if (process == NULL)
     {
-        printf("No process found");
         return;
     }
     if (process->prev == NULL)
@@ -125,7 +106,6 @@ bool isEmpty(queue *q)
 void printQueue(queue *q)
 {
     int s = q->size;
-    printf("size : %d\n", s);
     PCB *cur = q->current;
     if (!cur)
         cur = q->head;
@@ -133,11 +113,6 @@ void printQueue(queue *q)
     for (i = 0; i < s; i++)
     {
         printf("%d ", cur->id);
-        if (q->current == NULL)
-        {
-            printf("NULL wrong\n");
-            break;
-        }
         cur = cur->next;
     }
 }
