@@ -10,7 +10,7 @@ void checkForNewHPFProcess(priQueue *hpfProcesses, int msgqID)
     {
         PCB *newProcess;
         newProcess = createNewProcess(buff.id, buff.arrivalTime,
-                                      buff.remainingTime, buff.priority);
+                                      buff.remainingTime, buff.priority, buff.memorySize);
         priQueueInsert(hpfProcesses, newProcess);
     }
 }

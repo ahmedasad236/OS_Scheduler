@@ -20,11 +20,11 @@ void runNextRoundRobinProcess(queue *runningProcesses)
 void checkForNewRoundRobinProcess(int msgqID, queue *runningProcesses)
 {
     struct processBuff buff;
-    while (msgrcv(msgqID, &buff, 14, 0, IPC_NOWAIT) != -1)
+    while (msgrcv(msgqID, &buff, 18, 0, IPC_NOWAIT) != -1)
     {
         PCB *newProcess;
         newProcess = createNewProcess(buff.id, buff.arrivalTime,
-                                      buff.remainingTime, buff.priority);
+                                      buff.remainingTime, buff.priority, buff.memorySize);
         queueInsert(runningProcesses, newProcess);
         if (!runningProcesses->current)
         {
