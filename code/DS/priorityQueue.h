@@ -78,7 +78,7 @@ PCB *dequeuePriQueue(priQueue *q)
 {
     if (q->head == NULL)
     {
-        perror("No process in the queue");
+        printf("No process in the queue");
         return NULL;
     }
     // Do not forget to delete the pointer in the main

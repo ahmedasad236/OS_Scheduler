@@ -25,7 +25,7 @@ void checkForNewRoundRobinProcess(int msgqID, queue *runningProcesses)
         PCB *newProcess;
         newProcess = createNewProcess(buff.id, buff.arrivalTime,
                                       buff.remainingTime, buff.priority);
-        insertNewProcess(runningProcesses, newProcess);
+        queueInsert(runningProcesses, newProcess);
         if (!runningProcesses->current)
         {
             runningProcesses->current = runningProcesses->head;
