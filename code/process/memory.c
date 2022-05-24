@@ -165,6 +165,7 @@ int main()
     buddyMemory *nodes[9];
     for (i = 0; i < length; i++)
         nodes[i] = insertProcess(root, sizes[i]);
+    printf("%p %d\n" , nodes[8] , nodes[8]->size);
     printBuddyMemory(root);
     deallocateBuddyMemory(root, nodes[0]);
     printBuddyMemory(root);
@@ -174,7 +175,10 @@ int main()
     printBuddyMemory(root);
     deallocateBuddyMemory(root, nodes[6]);
     printBuddyMemory(root);
-    printf("%p\n", nodes[7]);
+    printf("%p\n" , nodes[7]);
     deallocateBuddyMemory(root, nodes[7]);
+    printBuddyMemory(root);
+    printf("%p %d\n" , nodes[8] , nodes[8]->size);
+    deallocateBuddyMemory(root, nodes[8]);
     printBuddyMemory(root);
 }
