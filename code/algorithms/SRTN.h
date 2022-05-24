@@ -59,7 +59,7 @@ void checkForNewSRTNProcess(priQueue *srtnProcesses, int msgqID)
     {
         PCB *newProcess;
         newProcess = createNewProcess(buff.id, buff.arrivalTime,
-                                      buff.remainingTime, buff.priority);
+                                      buff.remainingTime, buff.priority, buff.memorySize);
         newSRTNProcess(srtnProcesses, newProcess);
     }
 }

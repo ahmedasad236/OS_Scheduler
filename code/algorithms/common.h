@@ -25,6 +25,7 @@ struct processBuff
     int arrivalTime;
     int remainingTime;
     short priority;
+    int memorySize;
     long mtype;
 };
 void outProcessInfo(PCB *p, char *state)
