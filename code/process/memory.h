@@ -1,3 +1,5 @@
+#ifndef __MEMORY__H_
+#define __MEMORY__H_
 // #include "../globals/headers.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,7 +53,7 @@ buddyMemory *findMinValidBuddy(buddyMemory *root, int size)
     }
     return compareMin(root, findMinValidBuddy(root->next, size));
 }
-buddyMemory *insertAfter(buddyMemory *element, int size)
+buddyMemory *insertAfterBuddyMemory(buddyMemory *element, int size)
 {
     if (!element)
     {
@@ -66,7 +68,7 @@ buddyMemory *insertAfter(buddyMemory *element, int size)
 buddyMemory *splitNode(buddyMemory *node)
 {
     node->size /= 2;
-    insertAfter(node, node->size);
+    insertAfterBuddyMemory(node, node->size);
     return node;
 }
 buddyMemory *splitTillFit(buddyMemory *node, int size)
@@ -75,7 +77,7 @@ buddyMemory *splitTillFit(buddyMemory *node, int size)
         node = splitNode(node);
     return node;
 }
-buddyMemory *insertProcess(buddyMemory *root, int size)
+buddyMemory *insertBuddyMemoryProcess(buddyMemory *root, int size)
 {
     buddyMemory *min = findMinValidBuddy(root, size);
     if (!min)
@@ -156,25 +158,4 @@ void deallocateBuddyMemory(buddyMemory *root, buddyMemory *node)
     deallocateBuddyMemory(root, mergedNode);
 }
 
-int main()
-{
-    buddyMemory *root = createBuddyMemory(1024);
-    int sizes[] = {240, 20, 90, 10, 150, 9000, 30, 400};
-    int length = sizeof(sizes) / sizeof(int);
-    int i = 0;
-    buddyMemory *nodes[9];
-    for (i = 0; i < length; i++)
-        nodes[i] = insertProcess(root, sizes[i]);
-    printBuddyMemory(root);
-    deallocateBuddyMemory(root, nodes[0]);
-    printBuddyMemory(root);
-    deallocateBuddyMemory(root, nodes[3]);
-    printBuddyMemory(root);
-    deallocateBuddyMemory(root, nodes[4]);
-    printBuddyMemory(root);
-    deallocateBuddyMemory(root, nodes[6]);
-    printBuddyMemory(root);
-    printf("%p\n", nodes[7]);
-    deallocateBuddyMemory(root, nodes[7]);
-    printBuddyMemory(root);
-}
+#endif

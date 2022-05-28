@@ -12,7 +12,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
-typedef short bool;
+#include "../process/memory.h"
+// typedef short bool;
 #define true 1
 #define false 0
 

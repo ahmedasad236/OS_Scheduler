@@ -1,6 +1,7 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 #include "../globals/global_variables.h"
+#include "../process/memory.h"
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <sys/shm.h>

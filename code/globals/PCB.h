@@ -16,6 +16,7 @@ typedef struct PCB
     bool state; // 0=>ready 1=>running
     struct PCB *next;
     struct PCB *prev;
+    buddyMemory *memory;
 } PCB;
 
 PCB *createNewProcess(int id, int arrivalTime, int runTime, short priority, int memorySize)
@@ -29,8 +30,10 @@ PCB *createNewProcess(int id, int arrivalTime, int runTime, short priority, int 
     newProcess->state = 0;
     newProcess->next = NULL;
     newProcess->prev = NULL;
+    newProcess->memory = NULL;
     newProcess->processID = -1;
     newProcess->memorySize = memorySize;
+
     return newProcess;
 }
 #endif
