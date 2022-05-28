@@ -9,8 +9,8 @@ struct processBuff
     int id;
     int arrivalTime;
     int remainingTime;
-    int memorySize;
     short priority;
+    int memorySize;
     long mtype;
 }; // size without type = 4 * 3 + 2 = 14;
 typedef struct ALGORITHM_TYPE
@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
 
     while (fscanf(ptr, "%d %d %d %d %d", &id, &arrivalTime, &remainingTime, &priority, &memorySize) == 5)
     {
+        printf("memory size : %d\n", memorySize);
         PCB *newProcess = createNewProcess(id, arrivalTime, remainingTime, priority, memorySize);
         insertLast(newProcess);
     }
@@ -67,6 +68,9 @@ int main(int argc, char *argv[])
     msgsnd(msgq_scheduler_id, &schedulerAlgorithm, 4, !IPC_NOWAIT);
     struct processBuff processTemp;
     processTemp.mtype = 0;
+    printf("size : %ld\n", sizeof(processTemp) - sizeof(long));
+    printf("size : %ld\n", 4 * sizeof(int) + sizeof(short));
+
     while (processTableLength > 0)
     {
         if (head->arrivalTime <= getClk())
@@ -77,7 +81,8 @@ int main(int argc, char *argv[])
             processTemp.priority = head->priority;
             processTemp.remainingTime = head->remainingTime;
             processTemp.memorySize = head->memorySize;
-            msgsnd(msgq_scheduler_id, &processTemp, 18, !IPC_NOWAIT);
+            printf("%d - %ld - %d\n", processTemp.id, processTemp.mtype, processTemp.memorySize);
+            msgsnd(msgq_scheduler_id, &processTemp, 24, !IPC_NOWAIT);
             deleteFirst();
         }
     }

@@ -156,29 +156,35 @@ void deallocateBuddyMemory(buddyMemory *root, buddyMemory *node)
     deallocateBuddyMemory(root, mergedNode);
 }
 
+struct test
+{
+    int x, y, z, a;
+    short b;
+};
 int main()
 {
-    buddyMemory *root = createBuddyMemory(1024);
-    int sizes[] = {240, 20, 90, 10, 150, 9000, 30, 400};
-    int length = sizeof(sizes) / sizeof(int);
-    int i = 0;
-    buddyMemory *nodes[9];
-    for (i = 0; i < length; i++)
-        nodes[i] = insertProcess(root, sizes[i]);
-    printf("%p %d\n" , nodes[8] , nodes[8]->size);
-    printBuddyMemory(root);
-    deallocateBuddyMemory(root, nodes[0]);
-    printBuddyMemory(root);
-    deallocateBuddyMemory(root, nodes[3]);
-    printBuddyMemory(root);
-    deallocateBuddyMemory(root, nodes[4]);
-    printBuddyMemory(root);
-    deallocateBuddyMemory(root, nodes[6]);
-    printBuddyMemory(root);
-    printf("%p\n" , nodes[7]);
-    deallocateBuddyMemory(root, nodes[7]);
-    printBuddyMemory(root);
-    printf("%p %d\n" , nodes[8] , nodes[8]->size);
-    deallocateBuddyMemory(root, nodes[8]);
-    printBuddyMemory(root);
+    printf("SIZE : %ld\n", sizeof(struct test));
+    // buddyMemory *root = createBuddyMemory(1024);
+    // int sizes[] = {240, 20, 90, 10, 150, 9000, 30, 400};
+    // int length = sizeof(sizes) / sizeof(int);
+    // int i = 0;
+    // buddyMemory *nodes[9];
+    // for (i = 0; i < length; i++)
+    //     nodes[i] = insertProcess(root, sizes[i]);
+    // printf("%p %d\n", nodes[8], nodes[8]->size);
+    // printBuddyMemory(root);
+    // deallocateBuddyMemory(root, nodes[0]);
+    // printBuddyMemory(root);
+    // deallocateBuddyMemory(root, nodes[3]);
+    // printBuddyMemory(root);
+    // deallocateBuddyMemory(root, nodes[4]);
+    // printBuddyMemory(root);
+    // deallocateBuddyMemory(root, nodes[6]);
+    // printBuddyMemory(root);
+    // printf("%p\n", nodes[7]);
+    // deallocateBuddyMemory(root, nodes[7]);
+    // printBuddyMemory(root);
+    // printf("%p %d\n", nodes[8], nodes[8]->size);
+    // deallocateBuddyMemory(root, nodes[8]);
+    // printBuddyMemory(root);
 }

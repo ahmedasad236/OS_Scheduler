@@ -20,12 +20,15 @@ void runNextRoundRobinProcess(queue *runningProcesses)
 void checkForNewRoundRobinProcess(queue *runningProcesses, queue *readyQueue, buddyMemory *memory, int msgqID)
 {
     struct processBuff buff;
-    while (msgrcv(msgqID, &buff, 18, 0, IPC_NOWAIT) != -1)
+    // printf("checking............\n");
+    while (msgrcv(msgqID, &buff, 24, 0, IPC_NOWAIT) != -1)
     {
         PCB *newProcess;
         newProcess = createNewProcess(buff.id, buff.arrivalTime,
                                       buff.remainingTime, buff.priority, buff.memorySize);
-        buddyMemory *nodeMemory = createBuddyMemory(newProcess->memorySize);
+        printf("id : %d , arrival : %d , remaining : %d , priority : %d , memorySize : %d\n", newProcess->processID, newProcess->arrivalTime, newProcess->remainingTime, newProcess->priority, newProcess->memorySize);
+        buddyMemory *nodeMemory = insertBuddyMemoryProcess(memory, newProcess->memorySize);
+        // printBuddyMemory(memory);
         if (nodeMemory)
         {
             newProcess->memory = nodeMemory;
@@ -75,6 +78,13 @@ void removeFromWaitingListRR(PCB *process)
 void checkInWaitingListRR(queue *runningProcesses, queue *readyQueue, buddyMemory *memory)
 {
     PCB *tempProcess = readyQueue->head;
+    printf("hello world");
+    printf("hello world");
+    printf("hello world");
+    printf("hello world");
+    printf("hello world");
+    printf("hello world");
+    // printBuddyMemory(memory);
     while (tempProcess)
     {
         buddyMemory *nodeMemory = insertBuddyMemoryProcess(memory, tempProcess->memorySize);
@@ -93,6 +103,7 @@ void RoundRobin(queue *runningProcesses, int msgqID)
     int clk = 0;
     queue *readyQueue = createQueue();
     buddyMemory *root = createBuddyMemory(1024);
+    printf("Round Robin\n");
     while (1)
     {
         checkForNewRoundRobinProcess(runningProcesses, readyQueue, root, msgqID);
