@@ -94,6 +94,12 @@ float getWTATime(PCB *p)
 {
     return getTATime(p) * 1.0 / p->totalRunTime;
 }
+void printTest(char *s)
+{
+    FILE *outFile = fopen("test.txt", "a");
+    fprintf(outFile, "%s\n", s);
+    fclose(outFile);
+}
 void outFinishProcessInfo(PCB *p)
 {
     p->remainingTime = 0;

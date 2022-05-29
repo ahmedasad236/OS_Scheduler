@@ -6,6 +6,8 @@ void runNextRoundRobinProcess(queue *runningProcesses)
     PCB *current = runningProcesses->current;
     if (!current)
         return;
+    if (current->id == 0)
+        printTest("id 0");
     if (current->processID == -1)
     {
         startNewProcess(current);
@@ -26,7 +28,7 @@ void checkForNewRoundRobinProcess(queue *runningProcesses, queue *readyQueue, bu
         PCB *newProcess;
         newProcess = createNewProcess(buff.id, buff.arrivalTime,
                                       buff.remainingTime, buff.priority, buff.memorySize);
-        printf("id : %d , arrival : %d , remaining : %d , priority : %d , memorySize : %d\n", newProcess->processID, newProcess->arrivalTime, newProcess->remainingTime, newProcess->priority, newProcess->memorySize);
+        printf("id : %d , arrival : %d , remaining : %d , priority : %d , memorySize : %d\n", newProcess->id, newProcess->arrivalTime, newProcess->remainingTime, newProcess->priority, newProcess->memorySize);
         buddyMemory *nodeMemory = insertBuddyMemoryProcess(memory, newProcess->memorySize);
         // printBuddyMemory(memory);
         if (nodeMemory)
@@ -45,13 +47,50 @@ void checkForNewRoundRobinProcess(queue *runningProcesses, queue *readyQueue, bu
         }
     }
 }
-void deleteRoundRobinProcessAndMoveToNextOne(buddyMemory *root, queue *runningProcesses)
+void removeFromWaitingListRR(PCB *process)
+{
+    if (process->prev)
+        process->prev->next = process->next;
+    if (process->next)
+        process->next->prev = process->prev;
+    free(process);
+}
+
+void checkInWaitingListRR(queue *runningProcesses, queue *readyQueue, buddyMemory *memory)
+{
+    PCB *tempProcess = readyQueue->head;
+    while (tempProcess)
+    {
+        buddyMemory *nodeMemory = insertBuddyMemoryProcess(memory, tempProcess->memorySize);
+        if (nodeMemory)
+        {
+            printTest(itoa(tempProcess->id));
+            tempProcess->memory = nodeMemory;
+            queueInsert(runningProcesses, tempProcess);
+            if (!runningProcesses->current)
+            {
+                printTest("current is null");
+                runningProcesses->current = runningProcesses->head;
+            }
+            else
+            {
+                printTest("current is not null");
+            }
+            removeFromWaitingListRR(tempProcess);
+            return;
+        }
+        tempProcess = tempProcess->next;
+    }
+}
+
+void deleteRoundRobinProcessAndMoveToNextOne(buddyMemory *root, queue *runningProcesses, queue *readyQueue)
 {
     runningProcesses->current->finishTime = getClk();
     // outProcessInfo(runningProcesses->current, "finished");
     outFinishProcessInfo(runningProcesses->current);
     deallocateBuddyMemory(root, runningProcesses->current->memory);
     deleteCurrentProcess(runningProcesses);
+    checkInWaitingListRR(runningProcesses, readyQueue, root);
     runNextRoundRobinProcess(runningProcesses);
     currentDeleted = false;
 }
@@ -64,39 +103,10 @@ void moveToNextRoundRobinProcess(queue *runningProcesses)
     // send signal to the current process to stop it
     if (current->processID != -1)
         stopProcess(current, SIGUSR1);
+    if (current->id == 0)
+        printTest("current id is 0");
     runningProcesses->current = current->next;
     runNextRoundRobinProcess(runningProcesses);
-}
-void removeFromWaitingListRR(PCB *process)
-{
-    if (process->prev)
-        process->prev->next = process->next;
-    if (process->next)
-        process->next->prev = process->prev;
-    free(process);
-}
-void checkInWaitingListRR(queue *runningProcesses, queue *readyQueue, buddyMemory *memory)
-{
-    PCB *tempProcess = readyQueue->head;
-    printf("hello world");
-    printf("hello world");
-    printf("hello world");
-    printf("hello world");
-    printf("hello world");
-    printf("hello world");
-    // printBuddyMemory(memory);
-    while (tempProcess)
-    {
-        buddyMemory *nodeMemory = insertBuddyMemoryProcess(memory, tempProcess->memorySize);
-        if (nodeMemory)
-        {
-            tempProcess->memory = nodeMemory;
-            queueInsert(runningProcesses, tempProcess);
-            removeFromWaitingListRR(tempProcess);
-            return;
-        }
-        tempProcess = tempProcess->next;
-    }
 }
 void RoundRobin(queue *runningProcesses, int msgqID)
 {
@@ -109,8 +119,8 @@ void RoundRobin(queue *runningProcesses, int msgqID)
         checkForNewRoundRobinProcess(runningProcesses, readyQueue, root, msgqID);
         if (currentDeleted)
         {
-            deleteRoundRobinProcessAndMoveToNextOne(root, runningProcesses);
-            checkInWaitingListRR(runningProcesses, readyQueue, root);
+            deleteRoundRobinProcessAndMoveToNextOne(root, runningProcesses, readyQueue);
+            // checkInWaitingListRR(runningProcesses, readyQueue, root);
             clk = getClk();
         }
         else if (getClk() >= clk + time_slot)
