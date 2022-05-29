@@ -35,6 +35,7 @@ void checkForNewRoundRobinProcess(int msgqID, queue *runningProcesses)
 }
 void deleteRoundRobinProcessAndMoveToNextOne(queue *runningProcesses)
 {
+    // printf("clk now : %d\n" , getClk());
     runningProcesses->current->finishTime = getClk();
     // outProcessInfo(runningProcesses->current, "finished");
     outFinishProcessInfo(runningProcesses->current);

@@ -76,9 +76,10 @@ void priQueueInsert(priQueue *q, PCB *newProcess)
 
 PCB *dequeuePriQueue(priQueue *q)
 {
+    // printf("dequeuePriQueue\n");
     if (q->head == NULL)
     {
-        printf("No process in the queue");
+        // printf("error in dequeuePriQueue\n");
         return NULL;
     }
     // Do not forget to delete the pointer in the main

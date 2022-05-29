@@ -97,6 +97,7 @@ void outFinishProcessInfo(PCB *p)
     p->remainingTime = 0;
     FILE *outFile = fopen("process_info.txt", "a");
     fprintf(outFile, "At time %d process %d finished arr : %d total : %d remain : %d wait : %d TA : %d WTA: %.2f \n", getClk(), p->id, p->arrivalTime, p->totalRunTime, p->remainingTime, getClk() - p->arrivalTime - p->totalRunTime, getTATime(p), getWTATime(p));
+    printf("PID : %d - ID : %d\n", p->processID, p->id);
     fclose(outFile);
 }
 

@@ -8,10 +8,13 @@ void newSRTNProcess(priQueue *srtnProcesses, PCB *process)
         startNewProcess(process);
         return;
     }
-    *shm_ptr = -1;
-    kill(currentProcess->processID, SIGBUS);
-    changeCurrentProcessRemainingTime();
-    if (process->remainingTime < currentProcess->remainingTime)
+    if (!currentDeleted)
+    {
+        *shm_ptr = -1;
+        kill(currentProcess->processID, SIGBUS);
+        changeCurrentProcessRemainingTime();
+    }
+    if (currentDeleted || (process->remainingTime < currentProcess->remainingTime))
     {
         outProcessInfo(currentProcess, "stopped");
         kill(currentProcess->processID, SIGSTOP);
@@ -40,7 +43,10 @@ void runNextSRTNProcess(priQueue *srtnProcesses)
 {
     currentProcess = dequeuePriQueue(srtnProcesses);
     if (!currentProcess)
+    {
+        printf("Not current process\n");
         return;
+    }
     if (currentProcess->processID == -1)
     {
         startNewProcess(currentProcess);

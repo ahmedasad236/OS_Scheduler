@@ -23,17 +23,34 @@ queue *createQueue()
 void queueInsert(queue *q, PCB *newProcess)
 {
     q->size++;
-    if (q->head == NULL)
+    // if (q->head == NULL)
+    // {
+    //     q->head = q->tail = newProcess;
+    //     newProcess->next = newProcess->prev = newProcess;
+    //     return;
+    // }
+    // q->head->prev = newProcess;
+    // q->tail->next = newProcess;
+    // newProcess->next = q->head;
+    // newProcess->prev = q->tail;
+    // q->tail = newProcess;
+    if(!q->head)
     {
         q->head = q->tail = newProcess;
         newProcess->next = newProcess->prev = newProcess;
+        return;   
+    }
+    if(!q->current)
+    {
+        printf("error in queueInsert\n");
         return;
     }
-    q->head->prev = newProcess;
-    q->tail->next = newProcess;
-    newProcess->next = q->head;
-    newProcess->prev = q->tail;
-    q->tail = newProcess;
+    // but it before current process
+    q->current->prev->next = newProcess;
+    newProcess->prev = q->current->prev;
+    newProcess->next = q->current;
+    q->current->prev = newProcess;
+
 }
 
 void queueDeleteFirst(queue *q)
@@ -77,6 +94,8 @@ void deleteCurrentProcess(queue *q)
     q->current->next->prev = q->current->prev;
     PCB *temp = q->current;
     q->current = q->current->next;
+    if (temp == q->head)
+        q->head = q->current;
     free(temp);
 }
 void deleteProcess(queue *q, int pid)
