@@ -1,0 +1,3 @@
+3
+current is not null
+id 0

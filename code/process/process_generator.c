@@ -18,8 +18,15 @@ typedef struct ALGORITHM_TYPE
     long mtype;
     int algoType;
 } ALGORITHM_TYPE;
+void initializingCodes()
+{
+    system("rm -rf process_info.txt");
+    system("rm -rf test.txt");
+    system("../helping/kill_running_processes.sh");
+}
 int main(int argc, char *argv[])
 {
+    initializingCodes();
     signal(SIGINT, clearResources);
     // TODO Initialization
     // 1. Read the input files.
