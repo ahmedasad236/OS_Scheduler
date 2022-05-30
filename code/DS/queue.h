@@ -23,20 +23,16 @@ queue *createQueue()
 void queueInsert(queue *q, PCB *newProcess)
 {
     q->size++;
-    printf("size %d\n", q->size);
     if (!q->head)
     {   
-        printf("1\n");
         q->head = q->tail = newProcess;
         newProcess->next = newProcess->prev = newProcess;
         return;
     }
     if (!q->current)
     {
-        printf("2\n");
         return;
     }
-    printf("3\n");
     q->current->prev->next = newProcess;
     newProcess->prev = q->current->prev;
     newProcess->next = q->current;

@@ -101,6 +101,12 @@ buddyMemory *getPrevNodeInfo(buddyMemory *root, buddyMemory *node, int *prevSize
     *prevSize += temp->size;
     return temp;
 }
+int getPrevNodeSize(buddyMemory *root, buddyMemory *node)
+{
+    int prevSize = 0;
+    buddyMemory *temp = getPrevNodeInfo(root, node, &prevSize);
+    return prevSize;
+}
 int getSmallestUnit(int size)
 {
     int it = 1024;

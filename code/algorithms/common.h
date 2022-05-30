@@ -101,25 +101,6 @@ void changeCurrentProcessRemainingTime()
         ;
     currentProcess->remainingTime = *shm_ptr;
 }
-
-void stopProcess(PCB *current, int SIGNAL)
-{
-    *shm_ptr = -1;
-    kill(current->processID, SIGNAL);
-    while (*shm_ptr == -1)
-        ;
-    current->remainingTime = *shm_ptr;
-    outProcessInfo(current, "stopped");
-}
-
-char *itoa(int num)
-{
-    int length = snprintf(NULL, 0, "%d", num);
-    char *str = (char *)malloc(length + 1);
-    snprintf(str, length + 1, "%d", num);
-    return str;
-}
-
 int getTATime(PCB *p)
 {
     return p->finishTime - p->arrivalTime;
@@ -130,11 +111,42 @@ float getWTATime(PCB *p)
 }
 void outFinishProcessInfo(PCB *p)
 {
+    if (p->state)
+        return;
+    p->finishTime = getClk();
     p->remainingTime = 0;
     FILE *outFile = fopen("process_info.txt", "a");
     fprintf(outFile, "At time %d process %d finished arr : %d total : %d remain : %d wait : %d TA : %d WTA: %.2f \n", getClk(), p->id, p->arrivalTime, p->totalRunTime, p->remainingTime, getClk() - p->arrivalTime - p->totalRunTime, getTATime(p), getWTATime(p));
     printf("PID : %d - ID : %d\n", p->processID, p->id);
     fclose(outFile);
+}
+
+void stopProcess(PCB *current, int SIGNAL)
+{
+    *shm_ptr = -1;
+    kill(current->processID, SIGNAL);
+    while (*shm_ptr == -1)
+        ;
+    current->remainingTime = *shm_ptr;
+    printf("remaining time : %d\n", current->remainingTime);
+    if (current->remainingTime <= 0)
+    {
+        printf("process %d finished at time %d\n", current->id, getClk());
+        outFinishProcessInfo(current);
+        current->state = 1;
+    }
+    else
+    {
+        outProcessInfo(current, "stopped");
+    }
+}
+
+char *itoa(int num)
+{
+    int length = snprintf(NULL, 0, "%d", num);
+    char *str = (char *)malloc(length + 1);
+    snprintf(str, length + 1, "%d", num);
+    return str;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////

@@ -42,7 +42,7 @@ PCB *createNewProcessP(PCB *p)
     newProcess->remainingTime = p->remainingTime;
     newProcess->priority = p->priority;
     newProcess->totalRunTime = p->totalRunTime;
-    newProcess->state = 0;
+    newProcess->state = p->state;
     newProcess->next = NULL;
     newProcess->prev = NULL;
     newProcess->processID = p->processID;

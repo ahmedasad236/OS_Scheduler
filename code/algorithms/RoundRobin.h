@@ -58,9 +58,7 @@ void checkInWaitingListRR(queue *runningProcesses, buddyQueue *readyQueue, buddy
             queueInsert(runningProcesses, createNewProcessP(tempProcess));
             PCB *temp = tempProcess;
             tempProcess = tempProcess->next;
-            printf("1\n");
             removeBuddyQueue(readyQueue, temp);
-            printf("2\n");
             printBuddyQueue(readyQueue);
             if (!runningProcesses->current)
                 runningProcesses->current = runningProcesses->head;
@@ -73,16 +71,9 @@ void checkInWaitingListRR(queue *runningProcesses, buddyQueue *readyQueue, buddy
 }
 void deleteRoundRobinProcessAndMoveToNextOne(queue *runningProcesses, buddyQueue *readyQueue, buddyMemory *memory)
 {
-    // printf("clk now : %d\n" , getClk());
-    runningProcesses->current->finishTime = getClk();
-    // outProcessInfo(runningProcesses->current, "finished");
     outFinishProcessInfo(runningProcesses->current);
-    // printf("BEFORE\n");
-    // printBuddyMemory(memory);
     deallocateBuddyMemory(memory, runningProcesses->current->memoryNode);
     printBuddyMemory(memory);
-    // printf("AFTER\n");
-    // printBuddyMemory(memory);
     deleteCurrentProcess(runningProcesses);
     checkInWaitingListRR(runningProcesses, readyQueue, memory);
     runNextRoundRobinProcess(runningProcesses);

@@ -10,7 +10,6 @@ void checkForNewHPFProcess(int msgqID, priQueue *hpfProcesses, priQueue *readyQu
         PCB *newProcess;
         newProcess = createNewProcess(buff.id, buff.arrivalTime,
                                       buff.remainingTime, buff.priority, buff.memorySize);
-        // printf("id : %d , arrivalTime : %d , remainingTime : %d , priority : %d , memorySize : %d\n", buff.id, buff.arrivalTime, buff.remainingTime, buff.priority, buff.memorySize);
         buddyMemory *nodeMemory = insertBuddyMemoryProcess(memory, newProcess->memorySize);
         if (!nodeMemory)
         {
