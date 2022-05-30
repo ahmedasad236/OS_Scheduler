@@ -59,6 +59,41 @@ void continueProcess(PCB *p)
     kill(pid, SIGUSR2);
 }
 
+void removeFromWaitingList(priQueue *readyQueue, PCB *process)
+{
+    if (process->prev)
+        process->prev->next = process->next;
+    if (process->next)
+        process->next->prev = process->prev;
+    if (process == readyQueue->head)
+        readyQueue->head = process->next;
+    if (process == readyQueue->tail)
+        readyQueue->tail = process->prev;
+    process->next = NULL;
+    process->prev = NULL;
+    free(process);
+}
+void checkInWaitingList(priQueue *processes, priQueue *readyQueue, buddyMemory *memory)
+{
+    PCB *tempProcess = readyQueue->head;
+    while (tempProcess)
+    {
+        buddyMemory *nodeMemory = insertBuddyMemoryProcess(memory, tempProcess->memorySize);
+        if (nodeMemory)
+        {
+            tempProcess->memoryNode = nodeMemory;
+            priQueueInsert(processes, createNewProcessP(tempProcess));
+            printf("process with size : %d inserted in running processes 2\n", tempProcess->memorySize);
+            PCB *temp = tempProcess;
+            tempProcess = tempProcess->next;
+            removeFromWaitingList(readyQueue, temp);
+        }
+        else
+        {
+            tempProcess = tempProcess->next;
+        }
+    }
+}
 void changeCurrentProcessRemainingTime()
 {
 

@@ -1,5 +1,6 @@
 #ifndef __SRTN_H__
 #define __SRTN_H__
+#include "common.h"
 void newSRTNProcess(priQueue *srtnProcesses, PCB *process)
 {
     if (isPriorityQueueEmpty(srtnProcesses) && !currentProcess)
@@ -26,14 +27,16 @@ void newSRTNProcess(priQueue *srtnProcesses, PCB *process)
     else
         priQueueInsert(srtnProcesses, process);
 }
-void deleteCurrentSRTNProcess()
+void deleteCurrentSRTNProcess(priQueue *srtnProcesses, priQueue *readyQueue, buddyMemory *memory)
 {
     if (currentProcess)
     {
         currentProcess->remainingTime = 0;
         currentProcess->finishTime = getClk();
         outFinishProcessInfo(currentProcess);
+        deallocateBuddyMemory(memory, currentProcess->memoryNode);
         free(currentProcess);
+        checkInWaitingList(srtnProcesses, readyQueue, memory);
         currentProcess = NULL;
     }
     currentDeleted = false;
@@ -58,26 +61,40 @@ void runNextSRTNProcess(priQueue *srtnProcesses)
     }
 }
 
-void checkForNewSRTNProcess(priQueue *srtnProcesses, int msgqID)
+void checkForNewSRTNProcess(int msgqID, priQueue *srtnProcesses, priQueue *readyQueue, buddyMemory *memory)
 {
     struct processBuff buff;
-    while (msgrcv(msgqID, &buff, 14, 0, IPC_NOWAIT) != -1)
+    while (msgrcv(msgqID, &buff, 18, 0, IPC_NOWAIT) != -1)
     {
         PCB *newProcess;
         newProcess = createNewProcess(buff.id, buff.arrivalTime,
-                                      buff.remainingTime, buff.priority);
-        newSRTNProcess(srtnProcesses, newProcess);
+                                      buff.remainingTime, buff.priority, buff.memorySize);
+        buddyMemory *nodeMemory = insertBuddyMemoryProcess(memory, newProcess->memorySize);
+        if (!nodeMemory)
+        {
+            priQueueInsert(readyQueue, newProcess);
+            printf("process with size : %d inserted in ready queue\n", newProcess->memorySize);
+        }
+        else
+        {
+            newProcess->memoryNode = nodeMemory;
+            printf("process with size : %d inserted in running processes\n", newProcess->memorySize);
+            newSRTNProcess(srtnProcesses, newProcess);
+        }
     }
 }
 
-void shortestRemainingTimeNext(priQueue *srtnProcesses, int msgqID)
+void shortestRemainingTimeNext(int msgqID)
 {
+    priQueue *srtnProcesses = createPriQueue(compSRTNProcesses);
+    priQueue *readyQueue = createPriQueue(compSRTNProcesses);
+    buddyMemory *memory = createBuddyMemory(1024);
     while (1)
     {
-        checkForNewSRTNProcess(srtnProcesses, msgqID);
+        checkForNewSRTNProcess(msgqID, srtnProcesses, readyQueue, memory);
         if (currentDeleted)
         {
-            deleteCurrentSRTNProcess();
+            deleteCurrentSRTNProcess(srtnProcesses, readyQueue, memory);
             runNextSRTNProcess(srtnProcesses);
         }
     }

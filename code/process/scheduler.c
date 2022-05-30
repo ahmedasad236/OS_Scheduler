@@ -1,6 +1,6 @@
 #include "../algorithms/common.h"
 #include "../algorithms/RoundRobin.h"
-// #include "../algorithms/SRTN.h"
+#include "../algorithms/SRTN.h"
 #include "../algorithms/HPF.h"
 
 int main(int argc, char *argv[])
@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
         highestPriorityFirst(msgq_processGenerator_id);
         break;
     case SRTN:
-        // shortestRemainingTimeNext(createPriQueue(compSRTNProcesses), msgq_processGenerator_id);
+        shortestRemainingTimeNext(msgq_processGenerator_id);
         break;
     case RR:
         RoundRobin(msgq_processGenerator_id);
