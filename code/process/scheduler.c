@@ -3,11 +3,19 @@
 #include "../algorithms/SRTN.h"
 #include "../algorithms/HPF.h"
 
+void SIGINT_handler(int sig)
+{
+    shmctl(key, IPC_RMID, (struct shmid_ds *)0);
+    destroyClk(true);
+    printf("cleared\n");
+    exit(0);
+}
 int main(int argc, char *argv[])
 {
     signal(SIGUSR1, SIGUSR1_handler);
+    signal(SIGINT, SIGINT_handler);
     // outFile = fopen("analysis.txt", "a");
-    int key = getShmKey();
+    key = getShmKey();
     initClk();
     int msgq_processGenerator_id;
     do
@@ -35,10 +43,6 @@ int main(int argc, char *argv[])
         // perror("some thing wrong in chosen algorithms");
         break;
     }
-
-    shmctl(key, IPC_RMID, (struct shmid_ds *)0);
     // upon termination release the clock resources.
-    destroyClk(true);
-
     return 0;
 }

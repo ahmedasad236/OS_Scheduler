@@ -34,6 +34,7 @@ void deleteCurrentSRTNProcess(priQueue *srtnProcesses, priQueue *readyQueue, bud
         currentProcess->remainingTime = 0;
         currentProcess->finishTime = getClk();
         outFinishProcessInfo(currentProcess);
+        outDeallocateMemory(memory, currentProcess);
         deallocateBuddyMemory(memory, currentProcess->memoryNode);
         free(currentProcess);
         checkInWaitingList(srtnProcesses, readyQueue, memory);
@@ -80,6 +81,7 @@ void checkForNewSRTNProcess(int msgqID, priQueue *srtnProcesses, priQueue *ready
             newProcess->memoryNode = nodeMemory;
             printf("process with size : %d inserted in running processes\n", newProcess->memorySize);
             newSRTNProcess(srtnProcesses, newProcess);
+            outAllocateMemory(memory, newProcess);
         }
     }
 }

@@ -4,6 +4,7 @@
 bool breaK = false;
 typedef struct PCB PCB;
 void clearResources(int);
+int msgq_scheduler_id;
 struct processBuff
 {
     int id;
@@ -21,9 +22,10 @@ typedef struct ALGORITHM_TYPE
 } ALGORITHM_TYPE;
 void clearProcesses()
 {
-    system("rm -f process_info.txt");
-    system("rm -f process__*");
     system("../helping/kill_running_processes.sh");
+    system("rm -f scheduler.log");
+    system("rm -f process__*");
+    system("rm -f memory.log");
 }
 int main(int argc, char *argv[])
 {
@@ -66,7 +68,6 @@ int main(int argc, char *argv[])
     // 6. Send the information to the scheduler at the appropriate time.
     // create the queue to communicate with the scheduler
     schedulerAlgorithm.mtype = 120;
-    int msgq_scheduler_id;
     do
     {
         msgq_scheduler_id = msgget(88, 0666 | IPC_CREAT);
@@ -94,20 +95,18 @@ int main(int argc, char *argv[])
     printf("done sending : %d\n", getClk());
     // to not destroy the clock till ctrl+c also for temporary cleaning
     while (1)
-    {
-        if (breaK)
-            break;
-    }
-    printLinkList();
+        ;
+    // printLinkList();
 
     // 7. Clear clock resources
-    destroyClk(true);
+    // destroyClk(true);
     // added by aref for temporary cleaning
-    msgctl(msgq_scheduler_id, IPC_RMID, (struct msqid_ds *)0);
 }
 
 void clearResources(int signum)
 {
-    breaK = true;
+    msgctl(msgq_scheduler_id, IPC_RMID, (struct msqid_ds *)0);
+    printf("cleared\n");
+    exit(0);
     // TODO Clears all resources in case of interruption
 }

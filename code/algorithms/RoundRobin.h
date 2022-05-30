@@ -36,6 +36,7 @@ void checkForNewRoundRobinProcess(int msgqID, queue *runningProcesses, buddyQueu
         {
             newProcess->memoryNode = nodeMemory;
             queueInsert(runningProcesses, newProcess);
+            outAllocateMemory(memory, newProcess);
         }
         if (!runningProcesses->current)
         {
@@ -56,6 +57,7 @@ void checkInWaitingListRR(queue *runningProcesses, buddyQueue *readyQueue, buddy
         {
             tempProcess->memoryNode = nodeMemory;
             queueInsert(runningProcesses, createNewProcessP(tempProcess));
+            outAllocateMemory(memory, tempProcess);
             PCB *temp = tempProcess;
             tempProcess = tempProcess->next;
             removeBuddyQueue(readyQueue, temp);
@@ -72,6 +74,7 @@ void checkInWaitingListRR(queue *runningProcesses, buddyQueue *readyQueue, buddy
 void deleteRoundRobinProcessAndMoveToNextOne(queue *runningProcesses, buddyQueue *readyQueue, buddyMemory *memory)
 {
     outFinishProcessInfo(runningProcesses->current);
+    outDeallocateMemory(memory, runningProcesses->current);
     deallocateBuddyMemory(memory, runningProcesses->current->memoryNode);
     printBuddyMemory(memory);
     deleteCurrentProcess(runningProcesses);

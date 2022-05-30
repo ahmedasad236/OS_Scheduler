@@ -20,6 +20,7 @@ void checkForNewHPFProcess(int msgqID, priQueue *hpfProcesses, priQueue *readyQu
         {
             newProcess->memoryNode = nodeMemory;
             priQueueInsert(hpfProcesses, newProcess);
+            outAllocateMemory(memory, newProcess);
             printf("process with size : %d inserted in running processes\n", newProcess->memorySize);
         }
     }
@@ -35,11 +36,11 @@ void startCurrentHPFProcess(priQueue *hpfProcesses)
     startNewProcess(currentProcess);
 }
 
-
 void finishHPFProcess(priQueue *hpfProcesses, priQueue *readyQueue, buddyMemory *memory)
 {
     currentProcess->finishTime = getClk();
     outFinishProcessInfo(currentProcess);
+    outDeallocateMemory(memory, currentProcess);
     deallocateBuddyMemory(memory, currentProcess->memoryNode);
     printBuddyMemory(memory);
     free(currentProcess);
