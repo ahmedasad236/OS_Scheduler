@@ -46,9 +46,6 @@ void priQueueInsert(priQueue *q, PCB *newProcess)
         newProcess->next = newProcess->prev = NULL;
         return;
     }
-
-    // call function as parameter
-
     PCB *tempPtr = q->priorityComp(q, newProcess);
     if (!tempPtr)
     {

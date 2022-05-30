@@ -23,34 +23,24 @@ queue *createQueue()
 void queueInsert(queue *q, PCB *newProcess)
 {
     q->size++;
-    // if (q->head == NULL)
-    // {
-    //     q->head = q->tail = newProcess;
-    //     newProcess->next = newProcess->prev = newProcess;
-    //     return;
-    // }
-    // q->head->prev = newProcess;
-    // q->tail->next = newProcess;
-    // newProcess->next = q->head;
-    // newProcess->prev = q->tail;
-    // q->tail = newProcess;
-    if(!q->head)
-    {
+    printf("size %d\n", q->size);
+    if (!q->head)
+    {   
+        printf("1\n");
         q->head = q->tail = newProcess;
         newProcess->next = newProcess->prev = newProcess;
-        return;   
-    }
-    if(!q->current)
-    {
-        printf("error in queueInsert\n");
         return;
     }
-    // but it before current process
+    if (!q->current)
+    {
+        printf("2\n");
+        return;
+    }
+    printf("3\n");
     q->current->prev->next = newProcess;
     newProcess->prev = q->current->prev;
     newProcess->next = q->current;
     q->current->prev = newProcess;
-
 }
 
 void queueDeleteFirst(queue *q)
@@ -117,7 +107,10 @@ void deleteProcess(queue *q, int pid)
         free(process);
     }
 }
-
+int queueSize(queue *q)
+{
+    return q->size;
+}
 bool isEmpty(queue *q)
 {
     return q->size == 0;
@@ -134,5 +127,6 @@ void printQueue(queue *q)
         printf("%d ", cur->id);
         cur = cur->next;
     }
+    printf("\n");
 }
 #endif

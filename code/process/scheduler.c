@@ -1,6 +1,6 @@
 #include "../algorithms/common.h"
 #include "../algorithms/RoundRobin.h"
-#include "../algorithms/SRTN.h"
+// #include "../algorithms/SRTN.h"
 #include "../algorithms/HPF.h"
 
 int main(int argc, char *argv[])
@@ -23,13 +23,13 @@ int main(int argc, char *argv[])
     switch (algorithm.algoType)
     {
     case HPF:
-        highestPriorityFirst(createPriQueue(compHPFProcesses), msgq_processGenerator_id);
+        highestPriorityFirst(msgq_processGenerator_id);
         break;
     case SRTN:
-        shortestRemainingTimeNext(createPriQueue(compSRTNProcesses), msgq_processGenerator_id);
+        // shortestRemainingTimeNext(createPriQueue(compSRTNProcesses), msgq_processGenerator_id);
         break;
     case RR:
-        RoundRobin(createQueue(), msgq_processGenerator_id);
+        RoundRobin(msgq_processGenerator_id);
         break;
     default:
         // perror("some thing wrong in chosen algorithms");

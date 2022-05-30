@@ -1,6 +1,7 @@
 #ifndef __RR_H__
 #define __RR_H__
 #include "common.h"
+#include "../DS/queueBuddy.h"
 void runNextRoundRobinProcess(queue *runningProcesses)
 {
     PCB *current = runningProcesses->current;
@@ -17,15 +18,25 @@ void runNextRoundRobinProcess(queue *runningProcesses)
     }
 }
 
-void checkForNewRoundRobinProcess(int msgqID, queue *runningProcesses)
+void checkForNewRoundRobinProcess(int msgqID, queue *runningProcesses, buddyQueue *readyQueue, buddyMemory *memory)
 {
     struct processBuff buff;
-    while (msgrcv(msgqID, &buff, 14, 0, IPC_NOWAIT) != -1)
+    while (msgrcv(msgqID, &buff, 18, 0, IPC_NOWAIT) != -1)
     {
         PCB *newProcess;
         newProcess = createNewProcess(buff.id, buff.arrivalTime,
-                                      buff.remainingTime, buff.priority);
-        queueInsert(runningProcesses, newProcess);
+                                      buff.remainingTime, buff.priority, buff.memorySize);
+
+        buddyMemory *nodeMemory = insertBuddyMemoryProcess(memory, newProcess->memorySize);
+        if (!nodeMemory)
+        {
+            buddyQueueInsert(readyQueue, newProcess);
+        }
+        else
+        {
+            newProcess->memoryNode = nodeMemory;
+            queueInsert(runningProcesses, newProcess);
+        }
         if (!runningProcesses->current)
         {
             runningProcesses->current = runningProcesses->head;
@@ -33,13 +44,47 @@ void checkForNewRoundRobinProcess(int msgqID, queue *runningProcesses)
         }
     }
 }
-void deleteRoundRobinProcessAndMoveToNextOne(queue *runningProcesses)
+void checkInWaitingListRR(queue *runningProcesses, buddyQueue *readyQueue, buddyMemory *memory)
+{
+    PCB *tempProcess = readyQueue->head;
+    int i = 0;
+    printBuddyQueue(readyQueue);
+    while (tempProcess)
+    {
+        buddyMemory *nodeMemory = insertBuddyMemoryProcess(memory, tempProcess->memorySize);
+        if (nodeMemory)
+        {
+            tempProcess->memoryNode = nodeMemory;
+            queueInsert(runningProcesses, createNewProcessP(tempProcess));
+            PCB *temp = tempProcess;
+            tempProcess = tempProcess->next;
+            printf("1\n");
+            removeBuddyQueue(readyQueue, temp);
+            printf("2\n");
+            printBuddyQueue(readyQueue);
+            if (!runningProcesses->current)
+                runningProcesses->current = runningProcesses->head;
+        }
+        else
+        {
+            tempProcess = tempProcess->next;
+        }
+    }
+}
+void deleteRoundRobinProcessAndMoveToNextOne(queue *runningProcesses, buddyQueue *readyQueue, buddyMemory *memory)
 {
     // printf("clk now : %d\n" , getClk());
     runningProcesses->current->finishTime = getClk();
     // outProcessInfo(runningProcesses->current, "finished");
     outFinishProcessInfo(runningProcesses->current);
+    // printf("BEFORE\n");
+    // printBuddyMemory(memory);
+    deallocateBuddyMemory(memory, runningProcesses->current->memoryNode);
+    printBuddyMemory(memory);
+    // printf("AFTER\n");
+    // printBuddyMemory(memory);
     deleteCurrentProcess(runningProcesses);
+    checkInWaitingListRR(runningProcesses, readyQueue, memory);
     runNextRoundRobinProcess(runningProcesses);
     currentDeleted = false;
 }
@@ -56,15 +101,19 @@ void moveToNextRoundRobinProcess(queue *runningProcesses)
     runNextRoundRobinProcess(runningProcesses);
 }
 
-void RoundRobin(queue *runningProcesses, int msgqID)
+void RoundRobin(int msgqID)
 {
+
+    queue *runningProcesses = createQueue();
+    buddyQueue *readyQueue = createBuddyQueue();
+    buddyMemory *memory = createBuddyMemory(1024);
     int clk = 0;
     while (1)
     {
-        checkForNewRoundRobinProcess(msgqID, runningProcesses);
+        checkForNewRoundRobinProcess(msgqID, runningProcesses, readyQueue, memory);
         if (currentDeleted)
         {
-            deleteRoundRobinProcessAndMoveToNextOne(runningProcesses);
+            deleteRoundRobinProcessAndMoveToNextOne(runningProcesses, readyQueue, memory);
             clk = getClk();
         }
         else if (getClk() >= clk + time_slot)

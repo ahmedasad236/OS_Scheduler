@@ -9,6 +9,7 @@ struct processBuff
     int id;
     int arrivalTime;
     int remainingTime;
+    int memorySize;
     short priority;
     long mtype;
 }; // size without type = 4 * 3 + 2 = 14;
@@ -32,14 +33,14 @@ int main(int argc, char *argv[])
     // TODO Initialization
     // 1. Read the input files.
     char buffer[100];
-    int id, priority, remainingTime, arrivalTime;
+    int id, priority, remainingTime, arrivalTime, memorySize;
     FILE *ptr;
     ptr = fopen("processes.txt", "r");
     fgets(buffer, 100, ptr);
 
-    while (fscanf(ptr, "%d %d %d %d", &id, &arrivalTime, &remainingTime, &priority) == 4)
+    while (fscanf(ptr, "%d %d %d %d %d", &id, &arrivalTime, &remainingTime, &priority, &memorySize) == 5)
     {
-        PCB *newProcess = createNewProcess(id, arrivalTime, remainingTime, priority);
+        PCB *newProcess = createNewProcess(id, arrivalTime, remainingTime, priority, memorySize);
         insertLast(newProcess);
     }
     // 2. Ask the user for the chosen scheduling algorithm and its parameters, if there are any.
@@ -84,7 +85,8 @@ int main(int argc, char *argv[])
             processTemp.arrivalTime = head->arrivalTime;
             processTemp.priority = head->priority;
             processTemp.remainingTime = head->remainingTime;
-            msgsnd(msgq_scheduler_id, &processTemp, 14, !IPC_NOWAIT);
+            processTemp.memorySize = head->memorySize;
+            msgsnd(msgq_scheduler_id, &processTemp, 18, !IPC_NOWAIT);
             deleteFirst();
         }
     }

@@ -24,6 +24,7 @@ struct processBuff
     int id;
     int arrivalTime;
     int remainingTime;
+    int memorySize;
     short priority;
     long mtype;
 };
