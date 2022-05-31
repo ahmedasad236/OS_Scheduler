@@ -1,7 +1,7 @@
 #ifndef __GLOBAL_VARIABLES_H__
 #define __GLOBAL_VARIABLES_H__
 #define shm_key 34
-#define time_slot 1
+#define time_slot 2
 
 typedef enum ALGORITHM
 {

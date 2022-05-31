@@ -17,6 +17,7 @@ float totalWTA = 0;
 int processesCount = 0;
 float totalWaitingTime = 0;
 float totalWTASquared = 0;
+int totalProcessesTimes = 0;
 int key;
 
 // FILE *outFile = NULL;
@@ -38,7 +39,7 @@ struct processBuff
 void outProcessInfo(PCB *p, char *state)
 {
     FILE *outFile = fopen("scheduler.log", "a");
-    fprintf(outFile, "At time %d process %d %s arr : %d total : %d remain : %d wait : %d\n", getClk(), p->id, state, p->arrivalTime, p->totalRunTime, p->remainingTime, getClk() - p->arrivalTime - p->totalRunTime + p->remainingTime);
+    fprintf(outFile, "At time %d process %d %s arr %d total %d remain %d wait %d\n", getClk(), p->id, state, p->arrivalTime, p->totalRunTime, p->remainingTime, getClk() - p->arrivalTime - p->totalRunTime + p->remainingTime);
     fclose(outFile);
 }
 void startNewProcess(PCB *newProcess)
@@ -51,6 +52,7 @@ void startNewProcess(PCB *newProcess)
     while (*shm_ptr == -1)
         ;
     newProcess->processID = *shm_ptr;
+    printf("id : %d\n", newProcess->processID);
     outProcessInfo(newProcess, "started");
 }
 void SIGUSR1_handler(int sig)
@@ -60,7 +62,10 @@ void SIGUSR1_handler(int sig)
 }
 void continueProcess(PCB *p)
 {
-    outProcessInfo(p, "continued");
+    // if (p->state)
+    //     return;
+    if (!p->state)
+        outProcessInfo(p, "continued");
     int pid = p->processID;
     kill(pid, SIGCONT);
     kill(pid, SIGUSR2);
@@ -149,6 +154,12 @@ float getSTDWTA()
     return sqrt((totalWTASquared - processesCount * getAvgWTA() * getAvgWTA()) / (processesCount - 1));
 }
 
+float getCPUUtilization()
+{
+    if (getClk() == 1)
+        return 100.0;
+    return totalProcessesTimes * 100.0 / (getClk() - 1);
+}
 void outProcessesSummary(PCB *p)
 {
     float WTA = getWTATime(p);
@@ -156,8 +167,9 @@ void outProcessesSummary(PCB *p)
     totalWTASquared += WTA * WTA;
     processesCount++;
     totalWaitingTime += getWaitedTime(p);
+    totalProcessesTimes += p->totalRunTime;
     FILE *file = fopen("scheduler.pref", "w");
-    fprintf(file, "CPU utilization = %.2f\nAvg WTA = %.2f\nAvg Waiting = %.2f\nStd WTA = %.2f\n", 100.0, getAvgWTA(), getAvgWaitedTime(), getSTDWTA());
+    fprintf(file, "CPU utilization = %.2f%c\nAvg WTA = %.2f\nAvg Waiting = %.2f\nStd WTA = %.2f\n", getCPUUtilization(), '%', getAvgWTA(), getAvgWaitedTime(), getSTDWTA());
     fclose(file);
 }
 void outFinishProcessInfo(PCB *p)
@@ -168,7 +180,7 @@ void outFinishProcessInfo(PCB *p)
     p->remainingTime = 0;
     outProcessesSummary(p);
     FILE *outFile = fopen("scheduler.log", "a");
-    fprintf(outFile, "At time %d process %d finished arr : %d total : %d remain : %d wait : %d TA : %d WTA: %.2f \n", getClk(), p->id, p->arrivalTime, p->totalRunTime, p->remainingTime, getWaitedTime(p), getTATime(p), getWTATime(p));
+    fprintf(outFile, "At time %d process %d finished arr %d total %d remain %d wait %d TA %d WTA %.2f\n", getClk(), p->id, p->arrivalTime, p->totalRunTime, p->remainingTime, getWaitedTime(p), getTATime(p), getWTATime(p));
     printf("PID : %d - ID : %d\n", p->processID, p->id);
     fclose(outFile);
 }

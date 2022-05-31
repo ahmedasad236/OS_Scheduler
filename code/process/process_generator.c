@@ -22,7 +22,6 @@ typedef struct ALGORITHM_TYPE
 } ALGORITHM_TYPE;
 void clearProcesses()
 {
-    system("../helping/kill_running_processes.sh");
     system("rm -f scheduler.log");
     system("rm -f process__*");
     system("rm -f memory.log");

@@ -18,7 +18,7 @@ void runNextRoundRobinProcess(queue *runningProcesses)
     }
 }
 
-void checkForNewRoundRobinProcess(int msgqID, queue *runningProcesses, buddyQueue *readyQueue, buddyMemory *memory)
+void checkForNewRoundRobinProcess(int msgqID, queue *runningProcesses, buddyQueue *readyQueue, buddyMemory *memory , int *clk)
 {
     struct processBuff buff;
     while (msgrcv(msgqID, &buff, 18, 0, IPC_NOWAIT) != -1)
@@ -42,6 +42,7 @@ void checkForNewRoundRobinProcess(int msgqID, queue *runningProcesses, buddyQueu
         {
             runningProcesses->current = runningProcesses->head;
             runNextRoundRobinProcess(runningProcesses);
+            *clk = getClk();
         }
     }
 }
@@ -104,7 +105,7 @@ void RoundRobin(int msgqID)
     int clk = 0;
     while (1)
     {
-        checkForNewRoundRobinProcess(msgqID, runningProcesses, readyQueue, memory);
+        checkForNewRoundRobinProcess(msgqID, runningProcesses, readyQueue, memory , &clk);
         if (currentDeleted)
         {
             deleteRoundRobinProcessAndMoveToNextOne(runningProcesses, readyQueue, memory);
