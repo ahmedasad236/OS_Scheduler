@@ -59,7 +59,7 @@
         * ```bash
             cd code/process/
         * ```bash
-            gcc scheduler.c -o SC && ./SC 
+            gcc scheduler.c -o SC -lm && ./SC 
 ---
 * ## Scheduler Flow
     *   > **Firstly**, the input text file **processes.txt** is read and save the processes data in the **process_generator**
@@ -77,12 +77,16 @@
     * > **scheduler.log** contains the following information for each process
         * > **arrival time**
         * > **state**
-        * > **id**
+        * > **process id**
         * > **total time**
         * > **Turnaround time(TA)** 
         * > **Waited turnaround time(WTA)**
-    * > **scheduler.log** contains the following information 
+    * > **scheduler.pref** contains the following information 
         * > **CPU utilization**
         * > **AVG WTA**
         * > **Avg Waiting**
         * > **Std WTA**
+   * > **memory.log** contains the following information 
+        * > **process id**
+        * > **allocated time**
+        * > **freed time**
