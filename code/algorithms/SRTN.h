@@ -1,5 +1,6 @@
 #ifndef __SRTN_H__
 #define __SRTN_H__
+#include "common.h"
 void newSRTNProcess(priQueue *srtnProcesses, PCB *process)
 {
     if (isPriorityQueueEmpty(srtnProcesses) && !currentProcess)
@@ -8,10 +9,21 @@ void newSRTNProcess(priQueue *srtnProcesses, PCB *process)
         startNewProcess(process);
         return;
     }
-    *shm_ptr = -1;
-    kill(currentProcess->processID, SIGBUS);
-    changeCurrentProcessRemainingTime();
-    if (process->remainingTime < currentProcess->remainingTime)
+    if (!currentDeleted)
+    {
+        *shm_ptr = -1;
+        kill(currentProcess->processID, SIGBUS);
+        changeCurrentProcessRemainingTime();
+    }
+    if (currentDeleted)
+    {
+        outFinishProcessInfo(currentProcess);
+        priQueueInsert(srtnProcesses, process);
+        currentProcess = dequeuePriQueue(srtnProcesses);
+        startNewProcess(currentProcess);
+        currentDeleted = false;
+    }
+    else if ((process->remainingTime < currentProcess->remainingTime))
     {
         outProcessInfo(currentProcess, "stopped");
         kill(currentProcess->processID, SIGSTOP);
@@ -19,18 +31,20 @@ void newSRTNProcess(priQueue *srtnProcesses, PCB *process)
         currentProcess = process;
         startNewProcess(process);
     }
-
     else
         priQueueInsert(srtnProcesses, process);
 }
-void deleteCurrentSRTNProcess()
+void deleteCurrentSRTNProcess(priQueue *srtnProcesses, priQueue *readyQueue, buddyMemory *memory)
 {
     if (currentProcess)
     {
         currentProcess->remainingTime = 0;
         currentProcess->finishTime = getClk();
         outFinishProcessInfo(currentProcess);
+        outDeallocateMemory(memory, currentProcess);
+        deallocateBuddyMemory(memory, currentProcess->memoryNode);
         free(currentProcess);
+        checkInWaitingList(srtnProcesses, readyQueue, memory);
         currentProcess = NULL;
     }
     currentDeleted = false;
@@ -40,7 +54,10 @@ void runNextSRTNProcess(priQueue *srtnProcesses)
 {
     currentProcess = dequeuePriQueue(srtnProcesses);
     if (!currentProcess)
+    {
+        printf("Not current process\n");
         return;
+    }
     if (currentProcess->processID == -1)
     {
         startNewProcess(currentProcess);
@@ -52,26 +69,42 @@ void runNextSRTNProcess(priQueue *srtnProcesses)
     }
 }
 
-void checkForNewSRTNProcess(priQueue *srtnProcesses, int msgqID)
+void checkForNewSRTNProcess(int msgqID, priQueue *srtnProcesses, priQueue *readyQueue, buddyMemory *memory)
 {
     struct processBuff buff;
-    while (msgrcv(msgqID, &buff, 14, 0, IPC_NOWAIT) != -1)
+    while (msgrcv(msgqID, &buff, 18, 0, IPC_NOWAIT) != -1)
     {
         PCB *newProcess;
         newProcess = createNewProcess(buff.id, buff.arrivalTime,
                                       buff.remainingTime, buff.priority, buff.memorySize);
-        newSRTNProcess(srtnProcesses, newProcess);
+        buddyMemory *nodeMemory = insertBuddyMemoryProcess(memory, newProcess->memorySize);
+        if (!nodeMemory)
+        {
+            priQueueInsert(readyQueue, newProcess);
+            printf("process with size : %d inserted in ready queue\n", newProcess->memorySize);
+        }
+        else
+        {
+            newProcess->memoryNode = nodeMemory;
+            printf("process with size : %d inserted in running processes\n", newProcess->memorySize);
+            newSRTNProcess(srtnProcesses, newProcess);
+            outAllocateMemory(memory, newProcess);
+        }
     }
 }
 
-void shortestRemainingTimeNext(priQueue *srtnProcesses, int msgqID)
+void shortestRemainingTimeNext(int msgqID)
 {
+    priQueue *srtnProcesses = createPriQueue(compSRTNProcesses);
+    priQueue *readyQueue = createPriQueue(compSRTNProcesses);
+    buddyMemory *memory = createBuddyMemory(1024);
     while (1)
     {
-        checkForNewSRTNProcess(srtnProcesses, msgqID);
+        checkForNewSRTNProcess(msgqID, srtnProcesses, readyQueue, memory);
         if (currentDeleted)
         {
-            deleteCurrentSRTNProcess();
+            printf("current : %d , %d\n", currentProcess->processID, currentProcess->id);
+            deleteCurrentSRTNProcess(srtnProcesses, readyQueue, memory);
             runNextSRTNProcess(srtnProcesses);
         }
     }

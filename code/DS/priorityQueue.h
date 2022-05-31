@@ -46,9 +46,6 @@ void priQueueInsert(priQueue *q, PCB *newProcess)
         newProcess->next = newProcess->prev = NULL;
         return;
     }
-
-    // call function as parameter
-
     PCB *tempPtr = q->priorityComp(q, newProcess);
     if (!tempPtr)
     {
@@ -78,10 +75,8 @@ PCB *dequeuePriQueue(priQueue *q)
 {
     if (q->head == NULL)
     {
-        printf("No process in the queue");
         return NULL;
     }
-    // Do not forget to delete the pointer in the main
     PCB *tempPtr = q->head;
     if (tempPtr == q->tail)
     {

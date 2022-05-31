@@ -11,8 +11,9 @@ typedef struct PCB
     int startTime;
     int finishTime;
     int waitingTime;
-    short priority;
     int memorySize;
+    short priority;
+    buddyMemory *memoryNode;
     bool state; // 0=>ready 1=>running
     struct PCB *next;
     struct PCB *prev;
@@ -31,6 +32,22 @@ PCB *createNewProcess(int id, int arrivalTime, int runTime, short priority, int 
     newProcess->prev = NULL;
     newProcess->processID = -1;
     newProcess->memorySize = memorySize;
+    return newProcess;
+}
+PCB *createNewProcessP(PCB *p)
+{
+    PCB *newProcess = (PCB *)malloc(sizeof(PCB));
+    newProcess->id = p->id;
+    newProcess->arrivalTime = p->arrivalTime;
+    newProcess->remainingTime = p->remainingTime;
+    newProcess->priority = p->priority;
+    newProcess->totalRunTime = p->totalRunTime;
+    newProcess->state = p->state;
+    newProcess->next = NULL;
+    newProcess->prev = NULL;
+    newProcess->processID = p->processID;
+    newProcess->memorySize = p->memorySize;
+    newProcess->memoryNode = p->memoryNode;
     return newProcess;
 }
 #endif

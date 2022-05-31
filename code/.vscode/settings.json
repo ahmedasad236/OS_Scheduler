@@ -2,6 +2,7 @@
     "files.associations": {
         "headers.h": "c",
         "ipc.h": "c",
-        "global_variables.h": "c"
+        "global_variables.h": "c",
+        "math.h": "c"
     }
 }
