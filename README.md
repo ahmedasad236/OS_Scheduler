@@ -50,16 +50,21 @@
 ```
 ---
 * ## How to run the scheduler
+    *   > to generate a test case run the following
+        * ```bash
+             cd code/process
+        * ```bash
+             gcc test_generator.c -o test.out && ./test.out
     *   > open two terminals and run the following commands in the first terminal
         * ```bash
             cd code/process/
         * ```bash
-            gcc process_generator.c -o PG && ./PG  
+            gcc process_generator.c -o process_generator.out && ./process_generator.out  
     * > then run the following to the second one
         * ```bash
             cd code/process/
         * ```bash
-            gcc scheduler.c -o SC -lm && ./SC 
+            gcc scheduler.c -o scheduler.out -lm && ./scheduler.out 
 ---
 * ## Scheduler Flow
     *   > **Firstly**, the input text file **processes.txt** is read and save the processes data in the **process_generator**
