@@ -1,4 +1,4 @@
-# Schedular
+# OS Scheduler
 
 * ## Introduction
 
